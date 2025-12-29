@@ -1,0 +1,148 @@
+📄 CHERRY RIVER OS
+
+COO AUTONOMOUS OPERATIONS – TECHNICAL IMPLEMENTATION BRIEF
+
+To: Ahmed (Lead Developer)
+From: Francis Delage
+Project: Cherry River OS – Autonomous COO Engine
+Priority: CRITICAL CORE SYSTEM
+
+⸻
+
+1. PURPOSE
+
+We are building an Autonomous COO System inside Odoo 19 that continuously monitors, predicts and auto-corrects:
+
+• Stock ruptures by sales territory
+• Raw material & packaging availability
+• Production feasibility (simulate any batch size)
+• Automatic purchase order generation
+• SAQ & IDFood logistics compliance
+   •   Logistic warehouse scanning & verification stock and quantity 
+
+This system must run continuously and generate a Weekly COO Command Report every Monday.
+
+⸻
+
+2. CORE COO QUESTIONS TO AUTOMATE
+
+The system must be able to answer:
+	1.	Were there any stock ruptures by sales territory last week SAQ stores number and products numbers 
+	2.	Which SKUs were in rupture SAQ which store under the watch of which Representant and for how many days?
+	3.	Which store for what product under the watch of which Representant  are currently under minimum stock?
+	4.	What replenishment orders must be generated?
+	5.	Which raw materials & packaging must be ordered now?
+	6.	What will be in rupture in 14 / 30 days?
+	8.	Are all inbound Tropo pallets/cases scanned, counted, and located?
+	9.	Are SAQ / IDFood orders fully prepared with BOL and compliance documents?
+	10.	Can we simulate production of X liters of any product and automatically generate missing purchase orders?
+
+⸻
+
+3. ODOO CUSTOM FIELDS
+
+Add these custom fields to all stockable products:
+
+Field Name	Type
+x_min_stock	Float
+x_max_stock	Float
+x_daily_avg_sales	Float
+x_days_cover	Computed
+x_risk_status	Selection (OK / IMMINENT / CRITICAL)
+x_lead_time_days	Integer
+x_auto_reorder	Boolean
+
+
+⸻
+
+4. LEAD-TIME GENOME (CRITICAL)
+
+Item	Lead-time (days)
+Glass bottles	100
+Cans – China	140
+Cans – Hart Print	35
+Bell flavors	49
+Sugar	14
+Sugar syrup	10
+Lime juice	21
+Lemon juice	21
+Fruit purées	28
+Maple syrup	14
+Neutral grain spirit (NGS)	10
+Vodka bulk	10
+Gin bulk	10
+Tequila bulk	45
+Rum bulk	60
+4-pack cartons	21
+6-pack cartons	21
+Cabaret cartons	21
+Master cartons	14
+Pallets	7
+Shrink film	7
+Lids / caps	21
+Labels	21
+CO₂	5
+Nitrogen	5
+CIP chemicals	7
+Functional additives	30
+
+
+⸻
+
+5. AUTOMATION RULES
+
+• If x_days_cover < x_lead_time_days → flag as IMMINENT
+• If x_days_cover < (x_lead_time_days / 2) → flag as CRITICAL
+• If CRITICAL → auto-generate RFQ to preferred supplier
+
+⸻
+
+6. WEEKLY COO REPORT (AUTO – EVERY MONDAY)
+
+The system must generate:
+
+• Ruptures by territory
+• Items at risk
+• Purchase orders to be generated
+• Production feasibility report
+• ASEP compliance report
+• SAQ & IDFood readiness report
+
+⸻
+
+This is the core intelligence system of Cherry River and must be treated as critical infrastructure.
+
+
+Personnel Configuration — SAQ Replenishment Control
+
+1. Sales Representatives (24h Nudge Targets)
+
+(These users receive DAILY reminders when a SAQ store is in OUT-OF-STOCK or LOW STOCK status.) (Lead Assigned)
+
+Name	Email	Territory
+Priscila Auger : priscilla@cherryriver.ca	Québec
+Junior Rivas Torres. junior@cherryriver.ca	North Shore of Montréal & Gatineau
+Jacob Guyon :
+jacob@cherryriver.ca	Estrie & South Shore
+Alycia Gagné : alycia@cherryriver.ca	Québec & Northern Québec
+Sophie Sabourin sophie@cherryriver.ca	Montréal & Laurentides
+
+
+⸻
+
+2. Sales Manager (48h Escalation Alerts)
+
+(Receives SLA Breach alerts if a SAQ rupture is not resolved within 48 hours.) (leads ignored)
+
+Name	Email
+Alyssa Delage	Alyssa@cherryriver.ca
+
+
+⸻
+
+3. Admin / “Shark” Account (72h Reassignment)
+
+(Automatically receives any unresolved SAQ store after 72 hours.) (Leads ignored)
+
+Name	Email
+Francis Delage	francis@cherryriver.ca

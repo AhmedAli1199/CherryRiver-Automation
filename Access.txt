@@ -1,0 +1,5 @@
+Relevance API: sk-NGY0NzM3NWEtNjljYy00Yzc0LWJlOTUtMTI3ZDJhMjEzN2Ni, Auth Token: 248e7576-e3d3-4add-ac5c-d3072d3b4567:sk-NGY0NzM3NWEtNjljYy00Yzc0LWJlOTUtMTI3ZDJhMjEzN2Ni
+Relevance REgion: bcbe5a
+Relevance Project: 248e7576-e3d3-4add-ac5c-d3072d3b4567
+
+Odoo API: c41b7126d416032f6de615f3a937df6ee48b1878
