@@ -260,8 +260,8 @@ class SAQScraper:
             download_link.click()
             print(f"✓ Clicked download link")
 
-            # Wait for download to complete
-            self._wait_for_download(files_before, "Sales_Summary_All_Products.csv")
+            # Wait for download
+            time.sleep(5)
 
             print(f"✓ Sales Summary download complete")
 
@@ -295,29 +295,71 @@ class SAQScraper:
         print(f"{'='*60}")
 
         try:
-            # Find all tables with class 'reportsTable'
-            tables = self.driver.find_elements(By.CLASS_NAME, "reportsTable")
+            # SPECIAL HANDLING FOR ROW 3 (Weekly Sales - goes to intermediate page like Sales Summary)
+            print(f"\n  [1/6] Weekly Sales for Selected Products")
+            print(f"      (Special handling - intermediate page)")
 
+            # Get row 3 (table row index 4) from the second table
+            tables = self.driver.find_elements(By.CLASS_NAME, "reportsTable")
             if len(tables) < 2:
                 print("✗ Could not find Raw Data table")
                 return False
 
-            # Second table contains the raw data downloads
             raw_data_table = tables[1]
+            # Row 3 data is in tr[4] (tr[1]=header, tr[2]=subheader, tr[3]=header row, tr[4]=first data row)
+            row_3 = raw_data_table.find_element(By.XPATH, ".//tr[4]")
 
-            # Get all rows (starting from row 3, which is index 3)
-            rows = raw_data_table.find_elements(By.XPATH, ".//tr")
+            # Click the link in row 3 to go to intermediate page
+            weekly_sales_link = row_3.find_element(By.XPATH, "./td[3]/a")
+            weekly_sales_link.click()
+            print(f"      ✓ Navigated to intermediate page")
+            time.sleep(3)
 
-            print(f"✓ Found {len(rows)} total rows in raw data table")
+            # Get the download link from the intermediate page
+            # Table: /html/body/div[1]/div[5]/div/div/table/tbody/tr/td[2]/form/table[1]
+            # Link in: 3rd tr, 3rd td
+            download_table = self.wait.until(
+                EC.presence_of_element_located(
+                    (By.XPATH, "/html/body/div[1]/div[5]/div/div/table/tbody/tr/td[2]/form/table[1]")
+                )
+            )
 
-            # Download each file from row 3 onwards
-            for row_index in range(3, len(rows)):
+            download_link = download_table.find_element(By.XPATH, ".//tr[3]/td[3]/a")
+            print(f"      ✓ Found download link")
+
+            # Get current files before download
+            files_before = set(os.listdir(self.download_dir))
+
+            download_link.click()
+            print(f"      ✓ Download initiated")
+
+            # Wait for download
+            time.sleep(5)
+
+            print(f"      ✓ Weekly Sales download complete")
+
+            # Navigate back to reports page
+            print(f"      Navigating back to reports page...")
+            self.driver.get(SAQ_REPORTS_URL)
+            time.sleep(3)
+
+            # Wait for the reports table to load again
+            self.wait.until(
+                EC.presence_of_element_located((By.CLASS_NAME, "reportsTable"))
+            )
+            print(f"      ✓ Back at reports page")
+
+            # REGULAR HANDLING FOR ROWS 4-8 (Direct downloads)
+            print(f"\n  Downloading remaining files (rows 4-8, direct downloads)...")
+
+            # Rows 4-8 correspond to table row indices 5-9
+            for row_index in range(4, 9):  # 4, 5, 6, 7, 8
                 try:
-                    file_name = FILE_MAPPING.get(row_index, f"Unknown_File_{row_index}")
-
-                    # Re-fetch the table and row to avoid stale element
+                    # Re-fetch the table to avoid stale element
                     tables = self.driver.find_elements(By.CLASS_NAME, "reportsTable")
                     raw_data_table = tables[1]
+
+                    # Row index 4 = table tr[5], row index 5 = table tr[6], etc.
                     row = raw_data_table.find_element(By.XPATH, f".//tr[{row_index + 1}]")
 
                     # Get file description from first column
@@ -326,8 +368,7 @@ class SAQScraper:
                     # Get download link from third column
                     download_link = row.find_element(By.XPATH, "./td[3]/a")
 
-                    print(f"\n  [{row_index - 2}/{len(rows) - 3}] {description}")
-                    print(f"      → Target: {file_name}.csv")
+                    print(f"\n  [{row_index - 2}/6] {description}")
 
                     # Get current file count before download
                     files_before = set(os.listdir(self.download_dir))
@@ -337,23 +378,29 @@ class SAQScraper:
                     print(f"      ✓ Download initiated")
 
                     # Wait for download
-                    self._wait_for_download(files_before, f"{file_name}.csv", timeout=30)
-
-                    time.sleep(1)
+                    time.sleep(3)
 
                 except Exception as e:
                     print(f"      ✗ Error: {str(e)}")
                     continue
 
-            print(f"\n✓ Raw data downloads complete")
+            print(f"\n✓ All raw data downloads complete")
             return True
 
         except Exception as e:
             print(f"✗ Error downloading raw data files: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return False
 
     def _wait_for_download(self, files_before, expected_filename, timeout=60):
-        """Wait for a file to finish downloading"""
+        """Wait for a file to finish downloading
+
+        Args:
+            files_before: Set of files before download
+            expected_filename: If None, keeps original filename. Otherwise renames to this.
+            timeout: Seconds to wait for download
+        """
         print(f"      ⏳ Waiting for download to complete...")
 
         # Ensure download_dir is a Path object
@@ -371,8 +418,8 @@ class SAQScraper:
                 downloaded_file = completed_files[0]
                 print(f"      ✓ Downloaded: {downloaded_file}")
 
-                # Rename file if it doesn't match expected name
-                if downloaded_file != expected_filename:
+                # Only rename if expected_filename is provided
+                if expected_filename and downloaded_file != expected_filename:
                     old_path = download_dir / downloaded_file
                     new_path = download_dir / expected_filename
 

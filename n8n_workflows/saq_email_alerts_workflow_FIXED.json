@@ -1,0 +1,259 @@
+{
+  "name": "SAQ Inventory Alerts - Email Notifications (Supabase API - FIXED)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule: Daily 9AM (Mon-Fri)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "Runs every weekday at 9:00 AM"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://nqxqqoinpoomcqdddoqq.supabase.co/rest/v1/rpc/get_inventory_alerts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": []
+        },
+        "options": {}
+      },
+      "id": "query-alerts-api",
+      "name": "Query Supabase API - Get Alerts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "supabase_headers",
+          "name": "Supabase Headers"
+        }
+      },
+      "notesInFlow": true,
+      "notes": "Calls RPC function to get inventory alerts"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the response and prepare data\nconst response = $input.first().json;\n\n// The response should be an array of alert objects\nconst alerts = Array.isArray(response) ? response : [];\n\nconsole.log(`Received ${alerts.length} alerts from Supabase`);\n\nif (alerts.length === 0) {\n  console.log('No alerts found - all inventory is healthy!');\n  return [];\n}\n\n// Return each alert as a separate item\nreturn alerts.map(alert => ({ json: alert }));"
+      },
+      "id": "parse-response",
+      "name": "Parse API Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "Converts API response to items"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Group alerts by sales representative\nconst items = $input.all();\n\nif (items.length === 0) {\n  console.log('No alerts to group');\n  return [];\n}\n\nconst groupedByRep = {};\n\nfor (const item of items) {\n  const data = item.json;\n  const repEmail = data.representative_email;\n  const repName = data.representative_name;\n  \n  if (!repEmail || repEmail === '') {\n    console.log('Skipping alert with no rep email:', data.store_number);\n    continue;\n  }\n  \n  if (!groupedByRep[repEmail]) {\n    groupedByRep[repEmail] = {\n      representative_email: repEmail,\n      representative_name: repName,\n      critical_count: 0,\n      warning_count: 0,\n      alerts: []\n    };\n  }\n  \n  // Count alerts by severity\n  if (data.is_critical) {\n    groupedByRep[repEmail].critical_count++;\n  } else if (data.is_warning) {\n    groupedByRep[repEmail].warning_count++;\n  }\n  \n  // Add alert details\n  groupedByRep[repEmail].alerts.push({\n    saq_code: data.saq_code,\n    product_name: data.product_name,\n    format: data.format || 'N/A',\n    category: data.category || 'N/A',\n    store_number: data.store_number,\n    store_name: data.store_name,\n    store_city: data.store_city,\n    store_region: data.store_region,\n    qty_inventory: data.qty_inventory,\n    avg_weekly_sales: data.avg_weekly_sales,\n    days_of_inventory: data.days_of_inventory,\n    is_critical: data.is_critical,\n    is_warning: data.is_warning,\n    snapshot_date: data.snapshot_date\n  });\n}\n\n// Convert to array for output\nconst output = Object.values(groupedByRep);\n\nconsole.log(`Grouped ${items.length} alerts for ${output.length} sales representatives`);\n\nreturn output.map(rep => ({ json: rep }));"
+      },
+      "id": "group-by-rep",
+      "name": "Group Alerts by Sales Rep",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "Groups alerts by sales representative and counts severity"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build HTML email for each sales rep\nconst repData = $input.item.json;\n\nconst repName = repData.representative_name || 'Sales Representative';\nconst criticalCount = repData.critical_count || 0;\nconst warningCount = repData.warning_count || 0;\nconst alerts = repData.alerts || [];\n\n// Sort alerts: critical first, then by days of inventory\nalerts.sort((a, b) => {\n  if (a.is_critical && !b.is_critical) return -1;\n  if (!a.is_critical && b.is_critical) return 1;\n  if (a.days_of_inventory === null) return -1;\n  if (b.days_of_inventory === null) return 1;\n  return (a.days_of_inventory || 0) - (b.days_of_inventory || 0);\n});\n\n// Generate HTML rows\nlet alertRows = '';\n\nfor (const alert of alerts) {\n  const severity = alert.is_critical ? 'CRITICAL' : 'WARNING';\n  const severityColor = alert.is_critical ? '#dc2626' : '#f59e0b';\n  const daysText = alert.days_of_inventory === null || alert.days_of_inventory === undefined\n    ? '<strong style=\"color: #dc2626;\">RUPTURE (0 inventory)</strong>' \n    : `${alert.days_of_inventory.toFixed(1)} days`;\n  const qtyText = alert.qty_inventory || 0;\n  const avgSalesText = alert.avg_weekly_sales ? alert.avg_weekly_sales.toFixed(1) : 'N/A';\n  \n  alertRows += `\n    <tr style=\"border-bottom: 1px solid #e5e7eb;\">\n      <td style=\"padding: 12px; background-color: ${severityColor}; color: white; font-weight: bold; text-align: center;\">\n        ${severity}\n      </td>\n      <td style=\"padding: 12px;\">\n        <strong>${alert.product_name}</strong><br>\n        <span style=\"color: #6b7280; font-size: 13px;\">${alert.format} | ${alert.category}</span><br>\n        <span style=\"color: #9ca3af; font-size: 12px;\">SAQ: ${alert.saq_code}</span>\n      </td>\n      <td style=\"padding: 12px;\">\n        <strong>${alert.store_name}</strong><br>\n        <span style=\"color: #6b7280; font-size: 13px;\">${alert.store_city}, ${alert.store_region}</span><br>\n        <span style=\"color: #9ca3af; font-size: 12px;\">Store #${alert.store_number}</span>\n      </td>\n      <td style=\"padding: 12px; text-align: center;\">\n        <strong>${qtyText}</strong> bottles\n      </td>\n      <td style=\"padding: 12px; text-align: center;\">\n        ${avgSalesText} btl/week\n      </td>\n      <td style=\"padding: 12px; text-align: center; font-weight: bold;\">\n        ${daysText}\n      </td>\n    </tr>\n  `;\n}\n\n// Build complete HTML email\nconst htmlEmail = `\n<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>SAQ Inventory Alerts</title>\n</head>\n<body style=\"margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;\">\n  <div style=\"max-width: 900px; margin: 0 auto; padding: 20px;\">\n    \n    <!-- Header -->\n    <div style=\"background: linear-gradient(135deg, #7c3aed 0%, #db2777 100%); padding: 30px; border-radius: 8px 8px 0 0; text-align: center;\">\n      <h1 style=\"color: white; margin: 0; font-size: 28px;\">🚨 Cherry River - SAQ Inventory Alerts</h1>\n      <p style=\"color: #fce7f3; margin: 10px 0 0 0; font-size: 16px;\">Daily Stock Monitoring Report</p>\n    </div>\n    \n    <!-- Summary Card -->\n    <div style=\"background-color: white; padding: 20px; border-left: 4px solid #7c3aed;\">\n      <h2 style=\"margin: 0 0 10px 0; color: #1f2937;\">Hello ${repName},</h2>\n      <p style=\"margin: 0; color: #4b5563; font-size: 15px; line-height: 1.6;\">\n        You have <strong style=\"color: #dc2626;\">${criticalCount} CRITICAL</strong> and \n        <strong style=\"color: #f59e0b;\">${warningCount} WARNING</strong> inventory alerts requiring your attention.\n      </p>\n    </div>\n    \n    <!-- Alert Legend -->\n    <div style=\"background-color: #fef3c7; padding: 15px; border-left: 4px solid #f59e0b;\">\n      <p style=\"margin: 0; color: #78350f; font-size: 14px;\">\n        <strong>Alert Types:</strong><br>\n        🔴 <strong>CRITICAL</strong>: Less than 7 days of inventory OR Rupture (0 stock)<br>\n        🟡 <strong>WARNING</strong>: Less than 14 days of inventory\n      </p>\n    </div>\n    \n    <!-- Alerts Table -->\n    <div style=\"background-color: white; padding: 0; overflow-x: auto;\">\n      <table style=\"width: 100%; border-collapse: collapse;\">\n        <thead>\n          <tr style=\"background-color: #f9fafb; border-bottom: 2px solid #e5e7eb;\">\n            <th style=\"padding: 12px; text-align: center; font-size: 13px; color: #6b7280; text-transform: uppercase;\">Severity</th>\n            <th style=\"padding: 12px; text-align: left; font-size: 13px; color: #6b7280; text-transform: uppercase;\">Product</th>\n            <th style=\"padding: 12px; text-align: left; font-size: 13px; color: #6b7280; text-transform: uppercase;\">Store</th>\n            <th style=\"padding: 12px; text-align: center; font-size: 13px; color: #6b7280; text-transform: uppercase;\">Current Stock</th>\n            <th style=\"padding: 12px; text-align: center; font-size: 13px; color: #6b7280; text-transform: uppercase;\">Avg Weekly Sales</th>\n            <th style=\"padding: 12px; text-align: center; font-size: 13px; color: #6b7280; text-transform: uppercase;\">Days Left</th>\n          </tr>\n        </thead>\n        <tbody>\n          ${alertRows}\n        </tbody>\n      </table>\n    </div>\n    \n    <!-- Action Items -->\n    <div style=\"background-color: #eff6ff; padding: 20px; border-left: 4px solid #3b82f6;\">\n      <h3 style=\"margin: 0 0 10px 0; color: #1e40af;\">📋 Recommended Actions</h3>\n      <ul style=\"margin: 0; padding-left: 20px; color: #1e3a8a; line-height: 1.8;\">\n        <li><strong>CRITICAL alerts:</strong> Contact store managers immediately to arrange restocking</li>\n        <li><strong>WARNING alerts:</strong> Schedule restocking within the next 7 days</li>\n        <li><strong>RUPTURE alerts:</strong> Prioritize - Zero inventory means lost sales</li>\n        <li>Check with warehouse team for product availability</li>\n      </ul>\n    </div>\n    \n    <!-- Footer -->\n    <div style=\"background-color: #1f2937; padding: 20px; border-radius: 0 0 8px 8px; text-align: center;\">\n      <p style=\"margin: 0; color: #9ca3af; font-size: 13px;\">\n        This is an automated report from Cherry River's SAQ Inventory Management System.<br>\n        Report generated on ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}\n      </p>\n      <p style=\"margin: 10px 0 0 0; color: #6b7280; font-size: 12px;\">\n        Questions? Contact your territory manager or email <a href=\"mailto:support@cherryriver.ca\" style=\"color: #60a5fa;\">support@cherryriver.ca</a>\n      </p>\n    </div>\n    \n  </div>\n</body>\n</html>\n`;\n\n// Email subject line\nconst subject = `🚨 SAQ Inventory Alerts: ${criticalCount} Critical, ${warningCount} Warning - ${new Date().toLocaleDateString()}`;\n\nreturn {\n  json: {\n    to: repData.representative_email,\n    representative_name: repName,\n    subject: subject,\n    html: htmlEmail,\n    critical_count: criticalCount,\n    warning_count: warningCount,\n    total_alerts: alerts.length\n  }\n};"
+      },
+      "id": "build-email",
+      "name": "Build HTML Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "Creates beautiful HTML email with alert details"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}"
+      },
+      "id": "send-email",
+      "name": "Send Email via Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1340,
+        300
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gmail_oauth",
+          "name": "Gmail OAuth2"
+        }
+      },
+      "notesInFlow": true,
+      "notes": "Sends email to sales rep via Gmail"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://nqxqqoinpoomcqdddoqq.supabase.co/rest/v1/email_logs",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"recipient_email\": \"{{ $json.to }}\",\n  \"recipient_name\": \"{{ $json.representative_name }}\",\n  \"subject\": \"{{ $json.subject }}\",\n  \"critical_count\": {{ $json.critical_count }},\n  \"warning_count\": {{ $json.warning_count }},\n  \"total_alerts\": {{ $json.total_alerts }},\n  \"status\": \"sent\"\n}",
+        "options": {}
+      },
+      "id": "log-email-api",
+      "name": "Log Email Sent (API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1560,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "supabase_headers",
+          "name": "Supabase Headers"
+        }
+      },
+      "notesInFlow": true,
+      "notes": "Tracks email delivery in database"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule: Daily 9AM (Mon-Fri)": {
+      "main": [
+        [
+          {
+            "node": "Query Supabase API - Get Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Supabase API - Get Alerts": {
+      "main": [
+        [
+          {
+            "node": "Parse API Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse API Response": {
+      "main": [
+        [
+          {
+            "node": "Group Alerts by Sales Rep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Group Alerts by Sales Rep": {
+      "main": [
+        [
+          {
+            "node": "Build HTML Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build HTML Email": {
+      "main": [
+        [
+          {
+            "node": "Send Email via Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email via Gmail": {
+      "main": [
+        [
+          {
+            "node": "Log Email Sent (API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "id": "saq-email-alerts-api-fixed",
+  "meta": {
+    "instanceId": "cherryriver-n8n"
+  },
+  "tags": []
+}

@@ -1,0 +1,502 @@
+?column?
+"Table: bom_lines
+bom_line_id_4 int4
+bom_line_id_5 int4
+bom_line_id_6 int4
+bom_line_id_7 int4
+bom_line_id_8 int4
+product_name text
+bom_line_id_10 int4
+bom_line_id_9 int4
+bom_id int4 NOT NULL
+product_id int4
+product_qty numeric
+write_date timestamp
+updated_at timestamp
+bom_line_id_1 int4
+bom_line_id_2 int4
+bom_line_id_3 int4
+product_uom text
+"
+"Table: chat_memory
+conversation_id text
+role text
+created_at timestamp
+id uuid
+content text
+"
+"Table: coo_reports
+generated_at timestamp
+report_type text
+report_content jsonb
+report_week date NOT NULL
+id int4 NOT NULL
+report_pdf_url text
+"
+"Table: email_logs
+error_message text
+recipient_name text
+recipient_email text NOT NULL
+subject text NOT NULL
+status text NOT NULL
+created_at timestamptz NOT NULL
+id int8 NOT NULL
+critical_count int4
+warning_count int4
+total_alerts int4
+sent_at timestamptz NOT NULL
+"
+"Table: id_foods_actuals
+created_at timestamptz
+order_month int4 NOT NULL
+order_year int4 NOT NULL
+id_foods_code varchar NOT NULL
+order_number varchar
+id int4 NOT NULL
+notes text
+qty_ordered int4
+order_date date
+"
+"Table: id_foods_forecasts
+id int4 NOT NULL
+id_foods_code varchar NOT NULL
+forecast_year int4 NOT NULL
+uploaded_by varchar
+uploaded_at timestamptz
+forecast_version timestamptz NOT NULL
+qty_forecast int4
+forecast_month int4 NOT NULL
+"
+"Table: id_foods_products
+saq_code varchar
+id int4 NOT NULL
+id_foods_code varchar NOT NULL
+product_name varchar NOT NULL
+odoo_product_id int4
+created_at timestamptz
+"
+"Table: lead_times
+id int4 NOT NULL
+notes text
+supplier_name text
+category text
+product_name text NOT NULL
+lead_time_days float8
+created_at timestamp
+updated_at timestamp
+product_id int4
+"
+"Table: n8n_chat_histories
+message jsonb NOT NULL
+session_id varchar NOT NULL
+id int4 NOT NULL
+"
+"Table: product_saq_mapping
+odoo_name varchar
+updated_at timestamptz
+created_at timestamptz
+odoo_product_id int4 NOT NULL
+id int4 NOT NULL
+code_saq varchar NOT NULL
+sku varchar
+"
+"Table: product_variant
+display_name text NOT NULL
+quantity_on_hand numeric
+"
+"Table: production_simulations
+target_quantity numeric
+product_id int4
+created_by text
+auto_generated_pos _text
+product_name text
+id int4 NOT NULL
+earliest_production_date date
+estimated_cost numeric
+missing_materials jsonb
+is_feasible bool
+simulation_date timestamp
+"
+"Table: products
+categ_id int4
+reordering_max_qty numeric
+id int4 NOT NULL
+type text
+virtual_available numeric
+incoming_qty numeric
+name text NOT NULL
+x_min_stock numeric
+outgoing_qty numeric
+reordering_min_qty numeric
+x_daily_avg_sales numeric
+x_lead_time_days int4
+standard_price numeric
+x_max_stock numeric
+x_auto_reorder bool
+default_code text
+list_price numeric
+write_date timestamp
+updated_at timestamp
+qty_available numeric
+"
+"Table: purchase_order_lines
+date_planned timestamp
+product_name text
+id int4 NOT NULL
+order_id int4
+product_id int4
+product_qty numeric
+price_unit numeric
+price_total numeric
+write_date timestamptz
+updated_at timestamp
+"
+"Table: purchase_orders
+amount_total numeric
+name text
+partner_name text
+state text
+id int4 NOT NULL
+date_order timestamp
+partner_id int4
+updated_at timestamp
+write_date timestamp
+date_planned timestamp
+"
+"Table: rupture_alerts
+store_number varchar NOT NULL
+saq_code varchar NOT NULL
+alert_date date NOT NULL
+id int8 NOT NULL
+days_in_rupture int4
+updated_at timestamptz
+created_at timestamptz
+resolved_at timestamptz
+escalated_at timestamptz
+escalated_to varchar
+sales_rep_email varchar
+status varchar
+alert_type varchar NOT NULL
+"
+"Table: sales_forecasts
+forecast_date date NOT NULL
+code_saq varchar NOT NULL
+id int4 NOT NULL
+odoo_product_id int4
+forecast_horizon int4 NOT NULL
+calculation_method varchar
+calculated_at timestamptz
+confidence_level numeric
+avg_daily_sales numeric
+projected_bottles numeric NOT NULL
+"
+"Table: saq_commandes
+id int4 NOT NULL
+date_commande date
+qty_commandee int4
+semaine int4
+date_livraison_prevue date
+code_saq varchar NOT NULL
+no_commande varchar NOT NULL
+unite_commande varchar
+code_monnaie varchar
+prix_achat numeric
+annee int4
+periode int4
+"
+"Table: saq_daily_stores
+type_listing varchar
+store_name varchar
+product_name varchar
+id int4 NOT NULL
+qty_bottles int4
+date_inventaire date NOT NULL
+updated_at timestamptz
+code_saq varchar NOT NULL
+store_id varchar NOT NULL
+banner varchar
+"
+"Table: saq_daily_warehouse
+updated_at timestamptz
+code_saq varchar NOT NULL
+product_name varchar
+type_listing varchar
+date_inventaire date NOT NULL
+inventaire_cdq numeric
+inv_alloc_cdm numeric
+inventaire_cdm numeric
+no_fournisseur int4
+risk_sharing bool
+is_online bool
+is_blocked bool
+uvc int4
+id int4 NOT NULL
+"
+"Table: saq_inventaire
+semaine int4 NOT NULL
+succursale varchar NOT NULL
+date_du_jour varchar
+code_saq varchar NOT NULL
+saq_inventaire_id int4 NOT NULL
+qty int4
+annee int4 NOT NULL
+periode int4 NOT NULL
+"
+"Table: saq_inventaire_entrepot
+code_saq varchar NOT NULL
+saq_entrepot_id int4 NOT NULL
+qty numeric
+annee int4 NOT NULL
+periode int4 NOT NULL
+semaine int4 NOT NULL
+date date
+entrepot varchar NOT NULL
+"
+"Table: saq_order_status
+type_listing varchar
+updated_at timestamptz
+product_name varchar
+code_saq varchar NOT NULL
+type_document varchar
+no_commande varchar NOT NULL
+statut varchar
+destination varchar
+id int4 NOT NULL
+qty_commandee int4
+no_fournisseur int4
+date_emission date
+date_expedition_demandee date
+date_pret_fournisseur date
+date_depart_reel date
+eta_confirme date
+created_at timestamptz
+"
+"Table: saq_product
+code_saq varchar NOT NULL
+id int4 NOT NULL
+no_fournisseur int4
+no_agent int4
+odoo_product_id int4
+created_at timestamptz
+description varchar
+"
+"Table: saq_stores
+store_name varchar
+city varchar
+region varchar
+sales_rep_name varchar
+updated_at timestamptz
+sales_rep_email varchar
+created_at timestamptz
+store_number varchar NOT NULL
+"
+"Table: saq_ventes
+montant numeric
+semaine int4 NOT NULL
+no_succursale varchar NOT NULL
+bouteille int4
+periode int4 NOT NULL
+annee int4 NOT NULL
+no_da int4
+code_saq varchar NOT NULL
+type_client int4
+no_fournisseur int4
+saq_ventes_id int4 NOT NULL
+"
+"Table: stock_movements
+location_dest_id int4
+updated_at timestamp
+write_date timestamp
+date timestamp
+product_qty numeric
+location_id int4
+product_id int4
+id int4 NOT NULL
+product_name text
+state text
+"
+"Table: stock_quants
+product_id int4
+id int4 NOT NULL
+available_quantity float4
+write_date timestamp
+location_name text
+product_name text
+reserved_quantity float4
+quantity float4
+updated_at timestamp
+location_id int4
+"
+"Table: v_dashboard_kpi
+total_warehouse_cases numeric
+total_products int8
+last_warehouse_update date
+last_store_update date
+low_stock_products int8
+open_orders int8
+total_units_on_order int8
+active_stores int8
+total_bottles_in_stores int8
+"
+"Table: v_id_foods_forecast
+product_name varchar
+statut_mois text
+forecast_version timestamptz
+ecart int8
+qty_actual int8
+qty_forecast int4
+forecast_month int4
+id_foods_code varchar
+forecast_year int4
+mois text
+"
+"Table: v_id_foods_ytd
+annee int4
+product_name varchar
+ytd_prevision int8
+ytd_reel int8
+ytd_ecart int8
+ytd_ecart_pct numeric
+id_foods_code varchar
+prevision_annuelle int8
+"
+"Table: v_open_orders
+product_name varchar
+date_expedition_demandee date
+date_emission date
+qty_commandee int4
+code_saq varchar
+date_pret_fournisseur date
+no_commande varchar
+date_depart_reel date
+eta_confirme date
+jours_avant_expedition int4
+statut varchar
+updated_at timestamptz
+destination varchar
+"
+"Table: v_po_prediction
+warehouse_mtl_cases numeric
+alerte text
+code_saq varchar
+product_name varchar
+warehouse_qc_cases numeric
+total_warehouse_cases numeric
+total_warehouse_bottles numeric
+avg_weekly_bottles numeric
+weeks_of_stock numeric
+date_inventaire date
+type_listing varchar
+"
+"Table: v_sales_forecast_14d
+code_saq varchar
+forecast_date date
+odoo_product_id int4
+avg_daily_sales numeric
+product_name varchar
+forecast_bottles_14d numeric
+horizon_days int4
+sku varchar
+"
+"Table: v_sales_forecast_30d
+odoo_product_id int4
+sku varchar
+avg_daily_sales numeric
+forecast_bottles_30d numeric
+product_name varchar
+code_saq varchar
+forecast_date date
+horizon_days int4
+"
+"Table: v_sales_forecast_7d
+avg_daily_sales numeric
+product_name varchar
+code_saq varchar
+forecast_bottles_7d numeric
+sku varchar
+forecast_date date
+odoo_product_id int4
+horizon_days int4
+"
+"Table: v_sales_forecast_summary
+code_saq varchar
+product_name varchar
+sku varchar
+forecast_date date
+avg_daily_sales numeric
+forecast_30d numeric
+forecast_14d numeric
+forecast_7d numeric
+odoo_product_id int4
+"
+"Table: v_sales_trend
+annee int4
+code_saq varchar
+stores_sold int8
+total_revenue numeric
+total_bottles int8
+semaine int4
+periode int4
+"
+"Table: v_store_inventory_by_banner
+nb_succursales int8
+total_bouteilles int8
+moy_par_succursale numeric
+date_inventaire date
+banniere varchar
+code_saq varchar
+product_name varchar
+"
+"Table: v_store_inventory_summary
+code_saq varchar
+nb_succursales int8
+max_par_succursale int4
+min_par_succursale int4
+total_bouteilles int8
+date_inventaire date
+product_name varchar
+succursales_rupture int8
+moy_par_succursale numeric
+"
+"Table: v_yoy_sales
+revenue_last_year numeric
+bottles_diff int8
+yoy_pct numeric
+revenue_this_year numeric
+product_name varchar
+code_saq varchar
+previous_year int4
+bottles_last_year int8
+bottles_this_year int8
+periode int4
+current_year int4
+"
+"Table: v_yoy_summary
+revenue_last_year numeric
+bottles_this_year int8
+bottles_last_year int8
+bottles_diff int8
+bottles_pct_change numeric
+revenue_pct_change numeric
+revenue_this_year numeric
+"
+"Table: v_yoy_top_performers
+bottles_last_year int8
+revenue_last_year numeric
+bottles_this_year int8
+bottles_diff int8
+yoy_pct numeric
+revenue_this_year numeric
+product_name varchar
+code_saq varchar
+"
+"Table: v_yoy_worst_performers
+bottles_last_year int8
+revenue_this_year numeric
+revenue_last_year numeric
+bottles_diff int8
+bottles_this_year int8
+code_saq varchar
+yoy_pct numeric
+product_name varchar
+"

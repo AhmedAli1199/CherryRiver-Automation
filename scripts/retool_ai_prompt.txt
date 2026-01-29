@@ -1,0 +1,124 @@
+Build me a COO Weekly Operations Dashboard for a spirits distributor (Cherry River). The entire dashboard must be in FRENCH. The data source is a Supabase REST API with these views already created as endpoints.
+
+=== REST API RESOURCE SETUP ===
+Resource name: supabase_rest
+Base URL: https://<project-ref>.supabase.co/rest/v1/
+Headers:
+  apikey: <supabase-anon-key>
+  Authorization: Bearer <supabase-service-role-key>
+
+Each view below is a GET endpoint. For example:
+GET /v_po_prediction returns JSON array of rows
+GET /v_dashboard_kpi returns a single row with all KPIs
+
+=== DASHBOARD LAYOUT ===
+
+--- TOP ROW: KPI Cards ---
+Query: GET /v_dashboard_kpi (single row)
+
+Create 6 stat/number cards in a horizontal row:
+1. "Produits en inventaire" → total_products
+2. "Produits stock faible" → low_stock_products (red if > 0)
+3. "Commandes ouvertes" → open_orders
+4. "Unités en commande" → total_units_on_order
+5. "Succursales actives" → active_stores
+6. "Bouteilles en succursales" → total_bottles_in_stores
+7. "Caisses en entrepôt" → total_warehouse_cases
+
+--- SECTION 1: Prédiction de commandes SAQ (PO Prediction) ---
+Query: GET /v_po_prediction
+
+Create a TABLE with columns:
+- Code SAQ (code_saq)
+- Produit (product_name)
+- Type (type_listing)
+- Entrepôt MTL (warehouse_mtl_cases) - format as number with 1 decimal
+- Entrepôt QC (warehouse_qc_cases) - format as number with 1 decimal
+- Total caisses (total_warehouse_cases) - bold
+- Ventes moy/sem (avg_weekly_bottles) - bottles per week
+- Semaines de stock (weeks_of_stock) - format as number with 1 decimal
+- Alerte (alerte)
+
+Row formatting:
+- If alerte = "COMMANDER" → entire row background light red (#FEE2E2)
+- If alerte = "SURVEILLER" → entire row background light yellow (#FEF9C3)
+- If alerte = "OK" → white background
+- If alerte = "Pas de ventes" → light gray background
+
+Sort by weeks_of_stock ascending (most urgent on top).
+Add a filter dropdown for alerte values.
+
+--- SECTION 2: Commandes ouvertes (Open Orders) ---
+Query: GET /v_open_orders
+
+Create a TABLE with columns:
+- No commande (no_commande)
+- Code SAQ (code_saq)
+- Produit (product_name)
+- Qté commandée (qty_commandee)
+- Destination (destination)
+- Date émission (date_emission) - format as date
+- Date expédition demandée (date_expedition_demandee) - format as date
+- Jours avant expédition (jours_avant_expedition) - color red if negative, green if > 7
+- Statut (statut) - show as badge/tag
+
+--- SECTION 3: Comparaison ventes année sur année (YoY Sales) ---
+Query: GET /v_yoy_sales
+
+Create a TABLE with columns:
+- Code SAQ (code_saq)
+- Produit (product_name)
+- Période (periode)
+- Bouteilles cette année (bottles_this_year)
+- Bouteilles année passée (bottles_last_year)
+- Différence (bottles_diff) - green if positive, red if negative
+- Variation % (yoy_pct) - append "%" sign, green if positive, red if negative
+
+Add a dropdown filter for periode (1-13).
+Add a dropdown filter for code_saq.
+
+--- SECTION 4: Inventaire succursales par produit (Store Inventory Summary) ---
+Query: GET /v_store_inventory_summary
+
+Create a TABLE with columns:
+- Code SAQ (code_saq)
+- Produit (product_name)
+- Nb succursales (nb_succursales)
+- Total bouteilles (total_bouteilles) - bold
+- Moy par succursale (moy_par_succursale)
+- Max (max_par_succursale)
+- Min (min_par_succursale)
+- Succursales en rupture (succursales_rupture) - red text if > 0
+
+--- SECTION 5: Inventaire par bannière (Inventory by Banner) ---
+Query: GET /v_store_inventory_by_banner
+
+Create a GROUPED BAR CHART:
+- X axis: product_name
+- Y axis: total_bouteilles
+- Group by: banniere (EXP = Express, SEL = Sélection, CLA = Classique)
+- Colors: EXP = blue, SEL = green, CLA = orange
+
+--- SECTION 6: Tendance des ventes (Sales Trend) ---
+Query: GET /v_sales_trend
+
+Create a LINE CHART:
+- X axis: combine annee + "P" + periode + "S" + semaine (e.g. "2025 P11S3")
+- Y axis: total_bottles
+- One line per code_saq (or allow selecting a product from dropdown)
+- Add a product selector dropdown that filters this chart
+
+=== STYLING ===
+- Dashboard title: "Cherry River - Tableau de bord opérations COO"
+- Use a clean white/light theme
+- Primary color: #1E3A5F (dark blue)
+- Accent color: #D4AF37 (gold)
+- All labels, headers, tooltips in French
+- Date format: DD/MM/YYYY
+- Number format: use spaces as thousands separator (French standard)
+
+=== IMPORTANT NOTES ===
+- All data comes from Supabase REST API views (GET requests returning JSON arrays)
+- The dashboard is READ-ONLY, no write operations needed
+- Make sure to add a "Dernière mise à jour" timestamp showing last_warehouse_update from KPI query
+- Add a refresh button that re-runs all queries

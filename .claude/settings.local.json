@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(echo:*)",
+      "Bash(python processorssaq_processor_simplified.py:*)",
+      "Bash(\".venv/Scripts/python.exe\":*)",
+      "Bash(\".venv/Scripts/python.exe\" \"processors/saq_processor_v2.py\")",
+      "Bash(python:*)"
+    ]
+  }
+}
