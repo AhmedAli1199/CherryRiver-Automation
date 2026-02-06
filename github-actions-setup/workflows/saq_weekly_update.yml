@@ -1,0 +1,79 @@
+name: SAQ Weekly Data Update
+
+# Schedule: Every Monday at 3:00 AM EST (8:00 AM UTC)
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # Every Monday at 8 AM UTC (3 AM EST)
+
+  # Allow manual triggering for testing
+  workflow_dispatch:
+
+jobs:
+  scrape-and-update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30  # Prevent hanging
+
+    steps:
+      # Step 1: Checkout code
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python
+      - name: 🐍 Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # Step 3: Install dependencies
+      - name: 📦 Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Step 4: Install Chrome and ChromeDriver (for Selenium)
+      - name: 🌐 Install Chrome and ChromeDriver
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      # Step 5: Verify Chrome installation
+      - name: ✓ Verify Chrome Installation
+        run: |
+          which google-chrome
+          google-chrome --version
+          which chromedriver
+          chromedriver --version
+
+      # Step 6: Create downloads directory
+      - name: 📁 Create Download Directory
+        run: |
+          mkdir -p "SAQ Documents 2"
+          echo "Created: SAQ Documents 2/"
+
+      # Step 7: Run the complete pipeline
+      - name: 🚀 Run SAQ Weekly Pipeline
+        env:
+          SAQ_USERNAME: ${{ secrets.SAQ_USERNAME }}
+          SAQ_PASSWORD: ${{ secrets.SAQ_PASSWORD }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          python run_weekly_pipeline.py
+
+      # Step 8: Upload artifacts (for debugging)
+      - name: 📤 Upload Downloaded Files (Artifacts)
+        if: always()  # Run even if pipeline fails
+        uses: actions/upload-artifact@v4
+        with:
+          name: saq-data-files-${{ github.run_number }}
+          path: SAQ Documents 2/
+          retention-days: 7  # Keep for 7 days
+
+      # Step 9: Notify on failure (optional)
+      - name: 📧 Notify on Failure
+        if: failure()
+        run: |
+          echo "❌ SAQ Pipeline Failed!"
+          echo "Check the logs above for details."
+          echo "Run number: ${{ github.run_number }}"

@@ -13,6 +13,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configuration
 SAQ_LOGIN_URL = "https://www.saq-b2b.com/"
@@ -480,17 +484,33 @@ class SAQScraper:
 
 def main():
     """Entry point"""
+    # Check if running in CI/CD environment (GitHub Actions, etc.)
+    is_ci = os.getenv("CI", "false").lower() == "true" or os.getenv("GITHUB_ACTIONS", "false").lower() == "true"
+
     # Prompt for credentials if not in environment
-    username = USERNAME or input("Enter SAQ B2B Username: ")
-    password = PASSWORD or input("Enter SAQ B2B Password: ")
+    if is_ci:
+        # In CI: credentials must be in environment variables
+        username = USERNAME
+        password = PASSWORD
+        headless = True  # Always headless in CI
 
-    if not username or not password:
-        print("Error: Username and password are required!")
-        return
+        if not username or not password:
+            print("Error: SAQ_USERNAME and SAQ_PASSWORD environment variables are required in CI!")
+            return
 
-    # Ask if headless mode
-    headless_input = input("Run in headless mode? (y/N): ").strip().lower()
-    headless = headless_input == 'y'
+        print(f"Running in CI mode (headless)")
+    else:
+        # Local: prompt if not in environment
+        username = USERNAME or input("Enter SAQ B2B Username: ")
+        password = PASSWORD or input("Enter SAQ B2B Password: ")
+
+        if not username or not password:
+            print("Error: Username and password are required!")
+            return
+
+        # Ask if headless mode
+        headless_input = input("Run in headless mode? (y/N): ").strip().lower()
+        headless = headless_input == 'y'
 
     # Create scraper instance
     scraper = SAQScraper(

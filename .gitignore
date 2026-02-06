@@ -1,6 +1,45 @@
-.venv
+# ============================================
+# Cherry River - Git Ignore
+# ============================================
+
+# Environment variables (CRITICAL - contains passwords!)
 .env
+.env.local
+.env.*.local
 
+# Sensitive files
 Access.txt
-
 Project_Info/
+
+# Python virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Downloaded SAQ data files (IMPORTANT - large files!)
+SAQ Documents/
+SAQ Documents 2/
+*.csv
+*.zip
+
+# Selenium drivers
+chromedriver.exe
+chromedriver
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
