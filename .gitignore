@@ -29,6 +29,10 @@ SAQ Documents 2/
 *.csv
 *.zip
 
+# Database files (VERY LARGE - do not commit!)
+CherryRiverSAQData/
+*.sql
+
 # Selenium drivers
 chromedriver.exe
 chromedriver
