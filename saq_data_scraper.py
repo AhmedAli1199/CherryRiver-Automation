@@ -57,17 +57,27 @@ class SAQScraper:
         """Initialize Chrome WebDriver with download preferences"""
         chrome_options = Options()
 
+        # Headless mode with enhanced stability
         if self.headless:
             chrome_options.add_argument("--headless=new")
+            chrome_options.add_argument("--disable-software-rasterizer")
+            chrome_options.add_argument("--disable-extensions")
+            chrome_options.add_argument("--disable-dev-shm-usage")  # Overcome limited resource problems
+            chrome_options.add_argument("--disable-background-networking")
+            chrome_options.add_argument("--disable-background-timer-throttling")
+            chrome_options.add_argument("--disable-backgrounding-occluded-windows")
+            chrome_options.add_argument("--disable-renderer-backgrounding")
+            chrome_options.add_argument("--disable-features=VizDisplayCompositor")
 
+        # Essential stability arguments (always applied)
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--window-size=1920,1080")
-
-        # Additional stability options
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+
+        # Prevent detection and improve stability
+        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
         chrome_options.add_experimental_option('useAutomationExtension', False)
 
         # Set download preferences
@@ -448,6 +458,41 @@ class SAQScraper:
         print(f"      ✗ Download timeout after {timeout} seconds")
         return False
 
+    def _clear_download_directory(self):
+        """Clear all files in the download directory before starting"""
+        download_path = Path(self.download_dir)
+
+        if not download_path.exists():
+            print(f"\n📁 Creating download directory: {self.download_dir}")
+            download_path.mkdir(parents=True, exist_ok=True)
+            return
+
+        # Count existing files
+        existing_files = list(download_path.glob("*"))
+        if not existing_files:
+            print(f"\n📁 Download directory is already empty: {self.download_dir}")
+            return
+
+        print(f"\n🗑️  Clearing download directory: {self.download_dir}")
+        print(f"   Found {len(existing_files)} existing file(s)")
+
+        # Delete all files and subdirectories
+        deleted_count = 0
+        for item in existing_files:
+            try:
+                if item.is_file():
+                    item.unlink()
+                    deleted_count += 1
+                elif item.is_dir():
+                    import shutil
+                    shutil.rmtree(item)
+                    deleted_count += 1
+            except Exception as e:
+                print(f"   ⚠️  Could not delete {item.name}: {str(e)}")
+
+        print(f"   ✓ Deleted {deleted_count} item(s)")
+        print(f"   ✓ Directory is now clean and ready\n")
+
     def run(self):
         """Main execution flow"""
         try:
@@ -455,6 +500,9 @@ class SAQScraper:
             print(f"# SAQ B2B Data Scraper")
             print(f"# Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
             print(f"{'#'*60}")
+
+            # Clear download directory before starting
+            self._clear_download_directory()
 
             self.setup_driver()
             self.login()
@@ -492,13 +540,14 @@ def main():
         # In CI: credentials must be in environment variables
         username = USERNAME
         password = PASSWORD
-        headless = True  # Always headless in CI
+        # Run in visible mode with Xvfb (virtual display) on GitHub Actions
+        headless = False  # Changed to False - works better with Xvfb
 
         if not username or not password:
             print("Error: SAQ_USERNAME and SAQ_PASSWORD environment variables are required in CI!")
             return
 
-        print(f"Running in CI mode (headless)")
+        print(f"Running in CI mode (visible browser with Xvfb virtual display)")
     else:
         # Local: prompt if not in environment
         username = USERNAME or input("Enter SAQ B2B Username: ")
