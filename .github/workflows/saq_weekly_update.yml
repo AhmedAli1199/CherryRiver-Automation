@@ -12,6 +12,7 @@ jobs:
   scrape-and-update:
     runs-on: ubuntu-latest
     timeout-minutes: 30  # Prevent hanging
+    # environment: production  # Uncomment and set name if using GitHub Environments
 
     steps:
       # Step 1: Checkout code

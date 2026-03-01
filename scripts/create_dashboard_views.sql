@@ -6,28 +6,70 @@
 
 -- ============================================
 -- VIEW 1: PO Prediction - Weeks of Stock Remaining
+-- Patrick's method: Anomaly-cleaned average
+--
+-- HOW IT WORKS :
+--   1. Take ALL weekly sales for each product
+--   2. Sort weeks highest to lowest, set aside top 4 temporarily
+--   3. Average the remaining weeks = "normal average" (the baseline)
+--   4. Threshold = normal average x 1.5 (50% above normal)
+--   5. Remove ALL weeks above the threshold (not just the top 4)
+--      This catches cases where more than 4 weeks had spikes
+--   6. Final average = average of all remaining "normal" weeks
+--   7. weeks_of_stock = warehouse bottles / final average
+--   8. If weeks_of_stock < 4 = COMMANDER | < 6 = SURVEILLER | else OK
 -- ============================================
 CREATE OR REPLACE VIEW v_po_prediction AS
-WITH weekly_totals AS (
-    -- STEP 1: Sum ALL store sales per product per week
+WITH all_weekly_sales AS (
+    -- STEP 1: Add up all store sales per product per week
     SELECT
         code_saq,
         annee,
         periode,
         semaine,
-        SUM(bouteille) as week_total_bottles
+        SUM(bouteille) as week_total
     FROM saq_ventes
-    WHERE annee >= 2024
     GROUP BY code_saq, annee, periode, semaine
 ),
-weekly_velocity AS (
-    -- STEP 2: Average the weekly totals = true depletion rate
+ranked AS (
+    -- STEP 2: Rank each product's weeks from highest to lowest
     SELECT
         code_saq,
-        ROUND(AVG(week_total_bottles)::numeric, 1) as avg_weekly_bottles
-    FROM weekly_totals
+        week_total,
+        ROW_NUMBER() OVER (
+            PARTITION BY code_saq
+            ORDER BY week_total DESC
+        ) as rn
+    FROM all_weekly_sales
+),
+normal_avg AS (
+    -- STEP 3: Seed average = all weeks EXCEPT top 4
+    -- We use this as the baseline to detect anomalies
+    SELECT
+        code_saq,
+        AVG(week_total)::numeric as normal_avg
+    FROM ranked
+    WHERE rn > 4
     GROUP BY code_saq
+),
+cleaned_avg AS (
+    -- STEP 4: Keep only weeks that are NOT anomalies
+    -- A week is an anomaly if its value > normal_avg * 1.5
+    -- This removes ALL spike weeks, not just the top 4
+    --
+    -- Special case: if product has < 5 weeks of data,
+    -- there's no baseline to compare against, so keep everything
+    SELECT
+        r.code_saq,
+        ROUND(AVG(r.week_total)::numeric, 1) as avg_weekly_bottles,
+        COUNT(*) as weeks_used
+    FROM ranked r
+    LEFT JOIN normal_avg n ON r.code_saq = n.code_saq
+    WHERE n.normal_avg IS NULL                       -- keep all if < 5 weeks of data
+       OR r.week_total <= n.normal_avg * 1.5         -- keep any week that is NOT an anomaly
+    GROUP BY r.code_saq
 )
+-- STEP 5: Combine cleaned average with warehouse inventory
 SELECT
     w.code_saq,
     w.product_name,
@@ -36,24 +78,38 @@ SELECT
     w.inventaire_cdq as warehouse_qc_cases,
     ROUND(w.inventaire_cdm + w.inventaire_cdq, 1) as total_warehouse_cases,
     ROUND((w.inventaire_cdm + w.inventaire_cdq) * COALESCE(w.uvc, 12), 0) as total_warehouse_bottles,
-    COALESCE(v.avg_weekly_bottles, 0) as avg_weekly_bottles,
+
+    -- The cleaned average (anomaly spikes removed)
+    COALESCE(c.avg_weekly_bottles, 0) as avg_weekly_bottles,
+    -- How many weeks of data went into this average
+    COALESCE(c.weeks_used, 0) as weeks_used,
+
+    -- weeks_of_stock = warehouse bottles / avg weekly demand
     CASE
-        WHEN COALESCE(v.avg_weekly_bottles, 0) = 0 THEN 999
-        ELSE ROUND(((w.inventaire_cdm + w.inventaire_cdq) * COALESCE(w.uvc, 12)) / v.avg_weekly_bottles, 1)
+        WHEN COALESCE(c.avg_weekly_bottles, 0) = 0 THEN 999
+        ELSE ROUND(
+            ((w.inventaire_cdm + w.inventaire_cdq) * COALESCE(w.uvc, 12))
+            / c.avg_weekly_bottles, 1)
     END as weeks_of_stock,
+
+    -- Alert: how urgent is the situation?
     CASE
-        WHEN COALESCE(v.avg_weekly_bottles, 0) = 0 THEN 'Pas de ventes'
-        WHEN ((w.inventaire_cdm + w.inventaire_cdq) * COALESCE(w.uvc, 12)) / v.avg_weekly_bottles < 4 THEN 'COMMANDER'
-        WHEN ((w.inventaire_cdm + w.inventaire_cdq) * COALESCE(w.uvc, 12)) / v.avg_weekly_bottles < 6 THEN 'SURVEILLER'
+        WHEN COALESCE(c.avg_weekly_bottles, 0) = 0 THEN 'Pas de ventes'
+        WHEN ((w.inventaire_cdm + w.inventaire_cdq) * COALESCE(w.uvc, 12))
+             / c.avg_weekly_bottles < 4 THEN 'COMMANDER'
+        WHEN ((w.inventaire_cdm + w.inventaire_cdq) * COALESCE(w.uvc, 12))
+             / c.avg_weekly_bottles < 6 THEN 'SURVEILLER'
         ELSE 'OK'
     END as alerte,
+
     w.date_inventaire
 FROM saq_daily_warehouse w
-LEFT JOIN weekly_velocity v ON w.code_saq = v.code_saq
+LEFT JOIN cleaned_avg c ON w.code_saq = c.code_saq
 ORDER BY
     CASE
-        WHEN COALESCE(v.avg_weekly_bottles, 0) = 0 THEN 999
-        ELSE ((w.inventaire_cdm + w.inventaire_cdq) * COALESCE(w.uvc, 12)) / v.avg_weekly_bottles
+        WHEN COALESCE(c.avg_weekly_bottles, 0) = 0 THEN 999
+        ELSE ((w.inventaire_cdm + w.inventaire_cdq) * COALESCE(w.uvc, 12))
+             / c.avg_weekly_bottles
     END ASC;
 
 
@@ -192,12 +248,25 @@ ORDER BY annee DESC, periode DESC, semaine DESC;
 CREATE OR REPLACE VIEW v_dashboard_kpi AS
 WITH weekly_totals AS (
     SELECT code_saq, annee, periode, semaine, SUM(bouteille) as week_total
-    FROM saq_ventes WHERE annee >= 2024
+    FROM saq_ventes
     GROUP BY code_saq, annee, periode, semaine
 ),
+ranked AS (
+    SELECT code_saq, week_total,
+           ROW_NUMBER() OVER (PARTITION BY code_saq ORDER BY week_total DESC) as rn
+    FROM weekly_totals
+),
+normal_avg AS (
+    SELECT code_saq, AVG(week_total)::numeric as normal_avg
+    FROM ranked WHERE rn > 4
+    GROUP BY code_saq
+),
 velocity AS (
-    SELECT code_saq, AVG(week_total) as avg_weekly_bottles
-    FROM weekly_totals GROUP BY code_saq
+    SELECT r.code_saq, AVG(r.week_total) as avg_weekly_bottles
+    FROM ranked r
+    LEFT JOIN normal_avg n ON r.code_saq = n.code_saq
+    WHERE n.normal_avg IS NULL OR r.week_total <= n.normal_avg * 1.5
+    GROUP BY r.code_saq
 ),
 stock_alert AS (
     SELECT COUNT(*) as cnt
