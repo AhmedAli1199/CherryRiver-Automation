@@ -1,0 +1,563 @@
+-- Table: saq_product
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_product_id | int(11) | NO | PRI | NULL | auto_increment
+--   code_saq | int(11) | NO | NULL
+--   description | varchar(500) | NO | NULL
+--   no_fournisseur | int(11) | NO | NULL
+--   no_fournisseur_publie | int(11) | NO | NULL
+--   unite_vente | int(11) | NO | NULL
+--   pays_origine | varchar(50) | NO | NULL
+--   pays_destination | varchar(50) | NO | NULL
+--   code_couleur | int(11) | NO | NULL
+--   prix_vendant | float | NO | NULL
+--   import_type | int(11) | NO | NULL
+--   taux_alcool | int(11) | NO | NULL
+--   millesime_courrant | int(11) | NO | NULL
+--   millesime_commande | int(11) | NO | NULL
+--   format | int(11) | NO | NULL
+--   category_achat | varchar(50) | NO | NULL
+--   type_article | varchar(50) | NO | NULL
+--   type_listing | varchar(50) | NO | NULL
+--   reseau_distribution | varchar(50) | NO | NULL
+--   unite_mesure | varchar(50) | NO | NULL
+--   designation | varchar(50) | NO | NULL
+--   aromate | varchar(50) | NO | NULL
+--   cepage | varchar(50) | NO | NULL
+--   nature | varchar(50) | NO | NULL
+--   status | int(11) | NO | NULL
+-- Table: saq_promotion
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_promotion_id | int(11) | NO | PRI | NULL | auto_increment
+--   succursale | int(11) | NO | NULL
+--   code_saq | int(11) | NO | NULL
+--   annee | int(11) | NO | NULL
+--   periode | int(11) | NO | NULL
+--   montant | int(11) | NO | NULL
+--   Type | varchar(500) | NO | NULL
+-- Table: saq_promotion_flat
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_promotion_flat_id | int(11) | NO | PRI | NULL | auto_increment
+--   succursale | int(11) | NO | NULL
+--   annee | int(11) | NO | NULL
+--   P01 | float | NO | NULL
+--   P02 | float | NO | NULL
+--   P03 | float | NO | NULL
+--   P04 | float | NO | NULL
+--   P05 | float | NO | NULL
+--   P06 | float | NO | NULL
+--   P07 | float | NO | NULL
+--   P08 | float | NO | NULL
+--   P09 | float | NO | NULL
+--   P10 | float | NO | NULL
+--   P11 | float | NO | NULL
+--   P12 | float | NO | NULL
+--   P13 | float | NO | NULL
+-- Table: saq_ventes
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_ventes_id | int(11) | NO | PRI | NULL | auto_increment
+--   code_saq | varchar(500) | NO | ''
+--   no_fournisseur | int(11) | NO | NULL
+--   no_succursale | varchar(500) | NO | ''
+--   type_client | int(11) | NO | NULL
+--   no_da | int(11) | NO | NULL
+--   annee | int(11) | NO | NULL
+--   periode | int(11) | NO | NULL
+--   semaine | int(11) | NO | NULL
+--   bouteille | int(11) | NO | NULL
+--   montant | float | NO | NULL
+-- Table: saq_ventes_flat
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_vente_flat_id | int(11) | NO | PRI | NULL | auto_increment
+--   succursale | varchar(500) | NO | MUL | NULL
+--   code_saq | varchar(500) | NO | MUL | ''
+--   annee | int(11) | NO | MUL | NULL
+--   P11 | int(11) | NO | NULL
+--   P12 | int(11) | NO | NULL
+--   P13 | int(11) | NO | NULL
+--   P14 | int(11) | NO | NULL
+--   P21 | int(11) | NO | NULL
+--   P22 | int(11) | NO | NULL
+--   P23 | int(11) | NO | NULL
+--   P24 | int(11) | NO | NULL
+--   P31 | int(11) | NO | NULL
+--   P32 | int(11) | NO | NULL
+--   P33 | int(11) | NO | NULL
+--   P34 | int(11) | NO | NULL
+--   P41 | int(11) | NO | NULL
+--   P42 | int(11) | NO | NULL
+--   P43 | int(11) | NO | NULL
+--   P44 | int(11) | NO | NULL
+--   P51 | int(11) | NO | NULL
+--   P52 | int(11) | NO | NULL
+--   P53 | int(11) | NO | NULL
+--   P54 | int(11) | NO | NULL
+--   P61 | int(11) | NO | NULL
+-- Table: saq_ventes_flat_full
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_vente_flat_id | int(11) | NO | PRI | NULL | auto_increment
+--   succursale | varchar(500) | NO | MUL | NULL
+--   code_saq | varchar(500) | NO | MUL | ''
+--   annee | int(11) | NO | MUL | NULL
+--   P11 | int(11) | NO | NULL
+--   P12 | int(11) | NO | NULL
+--   P13 | int(11) | NO | NULL
+--   P14 | int(11) | NO | NULL
+--   P21 | int(11) | NO | NULL
+--   P22 | int(11) | NO | NULL
+--   P23 | int(11) | NO | NULL
+--   P24 | int(11) | NO | NULL
+--   P31 | int(11) | NO | NULL
+--   P32 | int(11) | NO | NULL
+--   P33 | int(11) | NO | NULL
+--   P34 | int(11) | NO | NULL
+--   P41 | int(11) | NO | NULL
+--   P42 | int(11) | NO | NULL
+--   P43 | int(11) | NO | NULL
+--   P44 | int(11) | NO | NULL
+--   P51 | int(11) | NO | NULL
+--   P52 | int(11) | NO | NULL
+--   P53 | int(11) | NO | NULL
+--   P54 | int(11) | NO | NULL
+--   P61 | int(11) | NO | NULL
+-- Table: saq_ventes_full
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_ventes_id | int(11) | NO | PRI | NULL | auto_increment
+--   code_saq | varchar(500) | NO | ''
+--   no_fournisseur | int(11) | NO | NULL
+--   no_succursale | varchar(500) | NO | ''
+--   type_client | int(11) | NO | NULL
+--   no_da | int(11) | NO | NULL
+--   annee | int(11) | NO | NULL
+--   periode | int(11) | NO | NULL
+--   semaine | int(11) | NO | NULL
+--   bouteille | int(11) | NO | NULL
+--   montant | float | NO | NULL
+-- Table: saq_ventes_sommaire
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_ventes_sommaire_id | int(10) unsigned | NO | PRI | NULL | auto_increment
+--   code_saq | varchar(500) | NO | ''
+--   upc | varchar(500) | NO | NULL
+--   description | varchar(500) | NO | NULL
+--   unite_de_vente | int(11) | NO | NULL
+--   qty_bouteille | int(11) | NO | NULL
+--   annee | int(11) | NO | NULL
+--   periode | int(11) | NO | NULL
+--   semaine | int(11) | NO | NULL
+-- Table: saq_ventes_sommaire_flat
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_ventes_sommaire_flat_id | int(11) | NO | PRI | NULL | auto_increment
+--   code_saq | varchar(500) | NO | MUL | ''
+--   upc | varchar(500) | NO | NULL
+--   description | varchar(500) | NO | NULL
+--   unite_de_vente | int(11) | NO | NULL
+--   annee | int(11) | NO | NULL
+--   P11 | int(11) | NO | NULL
+--   P12 | int(11) | NO | NULL
+--   P13 | int(11) | NO | NULL
+--   P14 | int(11) | NO | NULL
+--   P21 | int(11) | NO | NULL
+--   P22 | int(11) | NO | NULL
+--   P23 | int(11) | NO | NULL
+--   P24 | int(11) | NO | NULL
+--   P31 | int(11) | NO | NULL
+--   P32 | int(11) | NO | NULL
+--   P33 | int(11) | NO | NULL
+--   P34 | int(11) | NO | NULL
+--   P41 | int(11) | NO | NULL
+--   P42 | int(11) | NO | NULL
+--   P43 | int(11) | NO | NULL
+--   P44 | int(11) | NO | NULL
+--   P51 | int(11) | NO | NULL
+--   P52 | int(11) | NO | NULL
+--   P53 | int(11) | NO | NULL
+-- Table: saq_commandes
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   commande_id | int(11) | NO | PRI | NULL | auto_increment
+--   fournisseur_id | int(11) | NO | NULL
+--   no_commande | varchar(50) | NO | ''
+--   date_creation | varchar(50) | NO | ''
+--   date_changement | varchar(50) | NO | ''
+--   status | varchar(50) | NO | ''
+--   status_interne | varchar(50) | YES | NULL
+-- Table: saq_commandes_items
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   commandes_items_id | int(11) | NO | PRI | NULL | auto_increment
+--   commande_id | int(11) | NO | NULL
+--   code_produit | int(11) | NO | NULL
+--   nom_produit | varchar(50) | NO | ''
+--   quantite_demande | int(11) | NO | 0
+--   unite_de_vente | varchar(50) | NO | '0'
+--   format | varchar(50) | NO | '0'
+--   unite_prix | float | NO | 0
+--   total_prix | float | NO | 0
+--   date_expedition_demande | varchar(50) | NO | '0'
+--   date_pret | varchar(50) | NO | '0'
+--   date_reel_depart | varchar(50) | NO | '0'
+--   date_livraison_demande | varchar(50) | NO | '0'
+--   quantite_recu | varchar(50) | NO | '0'
+--   status | varchar(50) | NO | '0'
+--   status_interne | varchar(50) | YES | NULL
+-- Table: saq_references
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_reference_id | int(11) | NO | PRI | NULL | auto_increment
+--   code_system | int(11) | NO | NULL
+--   code_type | varchar(50) | NO | NULL
+--   code | varchar(50) | NO | NULL
+--   nom | varchar(500) | NO | NULL
+-- Table: saq_meeting
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_meeting_id | int(11) | NO | MUL | NULL | auto_increment
+--   date | varchar(50) | NO | NULL
+--   succursale | varchar(250) | NO | NULL
+--   user_id | int(11) | NO | NULL
+--   created_at | timestamp | NO | current_timestamp() | on update current_timestamp()
+-- Table: saq_heures_travail
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_heures_travail_id | int(11) | NO | PRI | NULL | auto_increment
+--   date_du_travail | date | NO | NULL
+--   rep_id | int(11) | NO | NULL
+--   nombre_heures | float | NO | NULL
+-- Table: saq_demandes_reps
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_demandes_reps_id | int(11) | NO | PRI | NULL | auto_increment
+--   rep_id | int(11) | YES | NULL
+--   to | varchar(50) | YES | NULL
+--   due_date | varchar(50) | YES | NULL
+--   request | text | YES | NULL
+--   status | int(11) | YES | NULL
+--   admin_note | text | YES | NULL
+--   succ | int(11) | YES | NULL
+--   products | varchar(500) | YES | NULL
+-- Table: saq_alerts
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_alert_id | int(11) | NO | PRI | NULL | auto_increment
+--   saq_alert_key | varchar(50) | NO | MUL | ''
+--   saq_alert_type | int(11) | NO | 0
+--   saq_succ_id | int(11) | NO | 0
+--   saq_product_code | int(11) | NO | 0
+--   saq_user_id | int(11) | NO | 0
+--   saq_alert_inventaire_value | float | NO | 0
+--   saq_alert_value | float | NO | 0
+--   saq_alert_status | int(11) | NO | 0
+-- Table: saq_alerts_comments
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_alerts_comments_id | int(11) | NO | PRI | NULL | auto_increment
+--   saq_alerts_id | int(11) | NO | 0
+--   saq_post_id | int(11) | NO | 0
+-- Table: saq_inventaire
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_inventaire_id | int(11) | NO | PRI | NULL | auto_increment
+--   succursale | varchar(500) | NO | NULL
+--   code_saq | varchar(500) | NO | MUL | ''
+--   qty | int(11) | NO | NULL
+--   annee | int(11) | NO | MUL | NULL
+--   periode | int(11) | NO | NULL
+--   semaine | int(11) | NO | NULL
+--   date_du_jour | varchar(500) | NO | NULL
+-- Table: saq_inventaire_flat
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_inventaire_flat_id | int(11) | NO | PRI | NULL | auto_increment
+--   succursale | varchar(500) | NO | NULL
+--   code_saq | varchar(500) | NO | MUL | ''
+--   annee | int(11) | NO | MUL | NULL
+--   P11 | int(11) | NO | NULL
+--   P12 | int(11) | NO | NULL
+--   P13 | int(11) | NO | NULL
+--   P14 | int(11) | NO | NULL
+--   P21 | int(11) | NO | NULL
+--   P22 | int(11) | NO | NULL
+--   P23 | int(11) | NO | NULL
+--   P24 | int(11) | NO | NULL
+--   P31 | int(11) | NO | NULL
+--   P32 | int(11) | NO | NULL
+--   P33 | int(11) | NO | NULL
+--   P34 | int(11) | NO | NULL
+--   P41 | int(11) | NO | NULL
+--   P42 | int(11) | NO | NULL
+--   P43 | int(11) | NO | NULL
+--   P44 | int(11) | NO | NULL
+--   P51 | int(11) | NO | NULL
+--   P52 | int(11) | NO | NULL
+--   P53 | int(11) | NO | NULL
+--   P54 | int(11) | NO | NULL
+--   P61 | int(11) | NO | NULL
+-- Table: saq_inventaire_entrepot
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_entrepot_id | int(11) | NO | PRI | NULL | auto_increment
+--   entrepot | varchar(10) | NO | NULL
+--   code_saq | int(11) | NO | NULL
+--   qty | float | NO | NULL
+--   annee | int(11) | NO | NULL
+--   periode | int(11) | NO | NULL
+--   semaine | int(11) | NO | NULL
+--   date | date | NO | NULL
+-- Table: saq_inventaire_entrepot_flat
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_inventaire_entrepot_flat_id | int(11) | NO | PRI | NULL | auto_increment
+--   entrepot | varchar(10) | NO | MUL | NULL
+--   code_saq | int(11) | NO | MUL | NULL
+--   annee | int(11) | NO | NULL
+--   P11 | float | NO | NULL
+--   P12 | float | NO | NULL
+--   P13 | float | NO | NULL
+--   P14 | float | NO | NULL
+--   P21 | float | NO | NULL
+--   P22 | float | NO | NULL
+--   P23 | float | NO | NULL
+--   P24 | float | NO | NULL
+--   P31 | float | NO | NULL
+--   P32 | float | NO | NULL
+--   P33 | float | NO | NULL
+--   P34 | float | NO | NULL
+--   P41 | float | NO | NULL
+--   P42 | float | NO | NULL
+--   P43 | float | NO | NULL
+--   P44 | float | NO | NULL
+--   P51 | float | NO | NULL
+--   P52 | float | NO | NULL
+--   P53 | float | NO | NULL
+--   P54 | float | NO | NULL
+--   P61 | float | NO | NULL
+-- Table: saq_comissions
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   saq_comissions_id | int(11) | NO | PRI | NULL | auto_increment
+--   succ_id | int(11) | NO | 0
+--   prod_id | int(11) | NO | 0
+--   target | varchar(50) | NO | '0'
+--   status | int(11) | NO | 0
+--   annee | int(11) | NO | 0
+--   history | varchar(500) | YES | '0'
+-- Table: saq_delegate_alert
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   delegate_alert_id | int(11) | NO | PRI | NULL | auto_increment
+--   annee | int(11) | NO | NULL
+--   periode | int(11) | NO | NULL
+--   semaine | int(11) | NO | NULL
+--   succ | int(11) | NO | NULL
+--   rep | int(11) | NO | NULL
+--   newrep | int(11) | NO | NULL
+-- Table: b2b_config
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   config_key | varchar(190) | NO | PRI | NULL
+--   config_value | varchar(255) | YES | NULL
+--   updated_by | int(10) unsigned | YES | NULL
+--   updated_at | datetime | NO | current_timestamp() | on update current_timestamp()
+-- Table: b2b_customers
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   noClientJDE | varchar(64) | NO | PRI | NULL
+--   customer_type | varchar(16) | NO | 'saq'
+--   nomClient | varchar(255) | YES | NULL
+--   nomContact | varchar(255) | YES | NULL
+--   courrielContact | varchar(255) | YES | NULL
+--   infos_adresse | varchar(255) | YES | NULL
+--   infos_ville | varchar(128) | YES | NULL
+--   infos_codePostal | varchar(32) | YES | NULL
+--   infos_noTelephoneBureau1 | varchar(64) | YES | NULL
+--   infos_noTelephoneBureau2 | varchar(64) | YES | NULL
+--   infos_typeClient | varchar(128) | YES | NULL
+--   infos_regionAdministrative | varchar(128) | YES | NULL
+--   infos_modePaiement | varchar(128) | YES | NULL
+--   customer_json | longtext | YES | NULL
+--   created_at | datetime | NO | current_timestamp()
+--   updated_at | datetime | NO | current_timestamp() | on update current_timestamp()
+-- Table: b2b_customer_comments
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   id | bigint(20) unsigned | NO | PRI | NULL | auto_increment
+--   noClientJDE | varchar(64) | NO | MUL | NULL
+--   comment_text | text | NO | NULL
+--   created_by_user_id | int(10) unsigned | YES | MUL | NULL
+--   created_at | datetime | NO | current_timestamp()
+--   updated_at | datetime | NO | current_timestamp() | on update current_timestamp()
+-- Table: b2b_customer_prefs
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   noClientJDE | varchar(64) | NO | PRI | NULL
+--   comm_days_json | longtext | YES | NULL
+--   comm_hour | tinyint(4) | YES | NULL
+--   comm_minute | tinyint(4) | YES | NULL
+--   delivery_days_json | longtext | YES | NULL
+--   delivery_hour | tinyint(4) | YES | NULL
+--   delivery_minute | tinyint(4) | YES | NULL
+--   created_at | datetime | NO | current_timestamp()
+--   updated_at | datetime | NO | current_timestamp() | on update current_timestamp()
+-- Table: b2b_customer_price_list
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   id | bigint(20) unsigned | NO | PRI | NULL | auto_increment
+--   noClientJDE | varchar(64) | NO | MUL | NULL
+--   product_id | bigint(20) unsigned | NO | MUL | NULL
+--   price_option_id | bigint(20) unsigned | NO | MUL | NULL
+--   created_by | int(10) unsigned | YES | NULL
+--   created_at | datetime | NO | current_timestamp()
+-- Table: b2b_users
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   id | int(10) unsigned | NO | PRI | NULL | auto_increment
+--   email | varchar(190) | NO | UNI | NULL
+--   name | varchar(190) | YES | NULL
+--   role | enum('admin','user','representant') | NO | 'user'
+--   pass_hash | varchar(255) | NO | NULL
+--   is_active | tinyint(1) | NO | 1
+--   must_change_password | tinyint(1) | NO | 0
+--   last_login_at | datetime | YES | NULL
+--   created_at | datetime | NO | current_timestamp()
+--   updated_at | datetime | NO | current_timestamp() | on update current_timestamp()
+-- Table: b2b_rep_customers
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   id | int(10) unsigned | NO | PRI | NULL | auto_increment
+--   user_id | int(10) unsigned | NO | MUL | NULL
+--   noClientJDE | varchar(64) | NO | MUL | NULL
+--   assigned_at | datetime | NO | current_timestamp()
+--   assigned_by | int(10) unsigned | YES | NULL
+-- Table: b2b_orders
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   order_no | varchar(64) | NO | PRI | NULL
+--   order_no_jde | varchar(64) | YES | NULL
+--   periode_debut | date | YES | NULL
+--   periode_fin | date | YES | NULL
+--   tsCommande | datetime | YES | NULL
+--   tsTraitement | datetime | YES | NULL
+--   dateEstimeeLivraison | datetime | YES | NULL
+--   statutCommande | varchar(128) | YES | NULL
+--   statutTransmission | varchar(128) | YES | NULL
+--   typeLivraison | varchar(128) | YES | NULL
+--   typeLivraisonDemande | varchar(128) | YES | NULL
+--   typeLivraisonConfirme | varchar(128) | YES | NULL
+--   assigneeACodeUsager | varchar(128) | YES | NULL
+--   assigneeADisplayName | varchar(255) | YES | NULL
+--   nomClient | varchar(255) | YES | NULL
+--   noClientJDE | varchar(64) | NO | MUL | NULL
+--   nomContact | varchar(255) | YES | NULL
+--   courrielContact | varchar(255) | YES | NULL
+--   demandeur_noClientJDE | varchar(64) | YES | NULL
+--   demandeur_nom | varchar(255) | YES | NULL
+--   demandeur_nomContact | varchar(255) | YES | NULL
+--   demandeur_courrielContact | varchar(255) | YES | NULL
+--   demandeur_infos_adresse | varchar(255) | YES | NULL
+--   demandeur_infos_ville | varchar(128) | YES | NULL
+--   demandeur_infos_codePostal | varchar(32) | YES | NULL
+-- Table: b2b_orders_items
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   id | bigint(20) unsigned | NO | PRI | NULL | auto_increment
+--   order_no | varchar(64) | NO | MUL | NULL
+--   item_hash | char(64) | NO | NULL
+--   idLigne | bigint(20) | YES | NULL
+--   ordre | int(11) | YES | NULL
+--   noProduit | varchar(64) | YES | NULL
+--   descriptionProduit | varchar(500) | YES | NULL
+--   quantite | decimal(12,3) | YES | NULL
+--   uvc | decimal(12,3) | YES | NULL
+--   formatMl | int(11) | YES | NULL
+--   millesime | varchar(32) | YES | NULL
+--   nomFournisseur | varchar(255) | YES | NULL
+--   item_json | longtext | YES | NULL
+--   created_at | datetime | NO | current_timestamp()
+--   updated_at | datetime | NO | current_timestamp() | on update current_timestamp()
+-- Table: b2b_order_internal
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   order_no | varchar(64) | NO | PRI | NULL
+--   internal_status | varchar(32) | NO | MUL | 'NEW'
+--   is_saq_locked | tinyint(1) | NO | 0
+--   created_by | int(10) unsigned | YES | MUL | NULL
+--   updated_by | int(10) unsigned | YES | NULL
+--   submitted_at | datetime | YES | NULL
+--   approved_at | datetime | YES | NULL
+--   canceled_at | datetime | YES | NULL
+--   created_at | datetime | NO | current_timestamp()
+--   updated_at | datetime | NO | current_timestamp() | on update current_timestamp()
+-- Table: b2b_products
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   id | bigint(20) unsigned | NO | PRI | NULL | auto_increment
+--   sku | varchar(64) | NO | UNI | NULL
+--   name | varchar(255) | NO | NULL
+--   product_type | enum('saq','non_saq','both') | NO | MUL | 'both'
+--   is_archived | tinyint(1) | NO | MUL | 0
+--   created_by | int(10) unsigned | YES | NULL
+--   updated_by | int(10) unsigned | YES | NULL
+--   created_at | datetime | NO | current_timestamp()
+--   updated_at | datetime | NO | current_timestamp() | on update current_timestamp()
+-- Table: b2b_product_price_options
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   id | bigint(20) unsigned | NO | PRI | NULL | auto_increment
+--   product_id | bigint(20) unsigned | NO | MUL | NULL
+--   label | varchar(190) | YES | NULL
+--   price | decimal(12,2) | NO | 0.00
+--   agency_fee | decimal(12,2) | NO | 0.00
+--   is_active | tinyint(1) | NO | MUL | 1
+--   created_by | int(10) unsigned | YES | NULL
+--   updated_by | int(10) unsigned | YES | NULL
+--   created_at | datetime | NO | current_timestamp()
+--   updated_at | datetime | NO | current_timestamp() | on update current_timestamp()
+--   is_consignable | tinyint(1) | NO | 0
+--   quantity | int(10) unsigned | NO | 1
+-- Table: wp_gf_form
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   id | mediumint(10) unsigned | NO | PRI | NULL | auto_increment
+--   title | varchar(150) | NO | NULL
+--   date_created | datetime | NO | NULL
+--   date_updated | datetime | YES | NULL
+--   is_active | tinyint(10) | NO | 1
+--   is_trash | tinyint(10) | NO | 0
+-- Table: wp_gf_form_meta
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   form_id | mediumint(10) unsigned | NO | PRI | NULL
+--   display_meta | longtext | YES | NULL
+--   entries_grid_meta | longtext | YES | NULL
+--   confirmations | longtext | YES | NULL
+--   notifications | longtext | YES | NULL
+-- Table: wp_gf_entry
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   id | int(10) unsigned | NO | PRI | NULL | auto_increment
+--   form_id | mediumint(10) unsigned | NO | MUL | NULL
+--   post_id | bigint(10) unsigned | YES | NULL
+--   date_created | datetime | NO | NULL
+--   date_updated | datetime | YES | NULL
+--   is_starred | tinyint(10) | NO | 0
+--   is_read | tinyint(10) | NO | 0
+--   ip | varchar(45) | NO | NULL
+--   source_url | varchar(200) | NO | ''
+--   user_agent | varchar(250) | NO | ''
+--   currency | varchar(5) | YES | NULL
+--   payment_status | varchar(15) | YES | NULL
+--   payment_date | datetime | YES | NULL
+--   payment_amount | decimal(19,2) | YES | NULL
+--   payment_method | varchar(30) | YES | NULL
+--   transaction_id | varchar(50) | YES | NULL
+--   is_fulfilled | tinyint(10) | YES | NULL
+--   created_by | bigint(10) unsigned | YES | NULL
+--   transaction_type | tinyint(10) | YES | NULL
+--   status | varchar(20) | NO | 'active'
+--   source_id | bigint(10) unsigned | YES | NULL
+-- Table: wp_gf_entry_meta
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   id | bigint(10) unsigned | NO | PRI | NULL | auto_increment
+--   form_id | mediumint(10) unsigned | NO | 0
+--   entry_id | bigint(10) unsigned | NO | MUL | NULL
+--   meta_key | varchar(255) | YES | MUL | NULL
+--   meta_value | longtext | YES | MUL | NULL
+--   item_index | varchar(60) | YES | NULL
+-- Table: wp_gf_entry_notes
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   id | int(10) unsigned | NO | PRI | NULL | auto_increment
+--   entry_id | int(10) unsigned | NO | MUL | NULL
+--   user_name | varchar(250) | YES | NULL
+--   user_id | bigint(10) | YES | NULL
+--   date_created | datetime | NO | NULL
+--   value | longtext | YES | NULL
+--   note_type | varchar(50) | YES | NULL
+--   sub_type | varchar(50) | YES | NULL
+-- Table: wp_users
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   ID | bigint(20) unsigned | NO | PRI | NULL | auto_increment
+--   user_login | varchar(60) | NO | MUL | ''
+--   user_pass | varchar(255) | NO | ''
+--   user_nicename | varchar(50) | NO | MUL | ''
+--   user_email | varchar(100) | NO | MUL | ''
+--   user_url | varchar(100) | NO | ''
+--   user_registered | datetime | NO | '0000-00-00 00:00:00'
+--   user_activation_key | varchar(255) | NO | ''
+--   user_status | int(11) | NO | 0
+--   display_name | varchar(250) | NO | ''
+-- Table: wp_usermeta
+-- COLUMN_NAME | COLUMN_TYPE | IS_NULLABLE | COLUMN_KEY | COLUMN_DEFAULT | EXTRA
+--   umeta_id | bigint(20) unsigned | NO | PRI | NULL | auto_increment
+--   user_id | bigint(20) unsigned | NO | MUL | 0
+--   meta_key | varchar(255) | YES | MUL | NULL
+--   meta_value | longtext | YES | NULL

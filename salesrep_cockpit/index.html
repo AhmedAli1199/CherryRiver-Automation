@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cherry River — SAQ Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <style>
+    /* ─── Reset & Base ─────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 13px; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f2f5; color: #2c3e50; }
+    [hidden] { display: none !important; }
+
+    /* ─── Login Page ────────────────────────────────────────────────────────── */
+    #login-page {
+      min-height: 100vh; background: #000; display: flex;
+      align-items: center; justify-content: center;
+    }
+    .login-card {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px; padding: 48px 40px; width: 360px; text-align: center;
+    }
+    .login-logo { width: 180px; margin-bottom: 32px; }
+    .login-card h1 { color: #fff; font-size: 1.4rem; font-weight: 600; margin-bottom: 8px; }
+    .login-card p  { color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-bottom: 28px; }
+    .form-group { margin-bottom: 16px; text-align: left; }
+    .form-group label { color: rgba(255,255,255,0.7); font-size: 0.78rem; display: block; margin-bottom: 6px; }
+    .form-group input {
+      width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+      color: #fff; font-size: 0.9rem; outline: none; transition: border-color .2s;
+    }
+    .form-group input:focus { border-color: #c0392b; }
+    .btn-login {
+      width: 100%; padding: 12px; background: #c0392b; color: #fff; border: none;
+      border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer;
+      margin-top: 8px; transition: background .2s;
+    }
+    .btn-login:hover { background: #a93226; }
+    .login-error { color: #e74c3c; font-size: 0.8rem; margin-top: 10px; }
+
+    /* ─── Top Nav ────────────────────────────────────────────────────────────── */
+    #app { display: flex; flex-direction: column; min-height: 100vh; }
+    .topnav {
+      background: #1c1c2e; color: #fff; display: flex;
+      align-items: center; padding: 0 20px; height: 52px; gap: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.3); position: sticky; top: 0; z-index: 100;
+    }
+    .topnav-logo { height: 34px; margin-right: 16px; }
+    .nav-item {
+      padding: 6px 14px; border-radius: 6px; color: rgba(255,255,255,.65);
+      font-size: 0.82rem; font-weight: 500; cursor: pointer; white-space: nowrap;
+      transition: all .15s; text-decoration: none; display: flex; align-items: center; gap: 6px;
+    }
+    .nav-item:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .nav-item.active { background: #c0392b; color: #fff; }
+    .nav-item i { font-size: 0.78rem; }
+    .nav-spacer { flex: 1; }
+    .nav-user { color: rgba(255,255,255,.55); font-size: 0.78rem; display: flex; align-items: center; gap: 8px; }
+    .nav-user i { font-size: 0.9rem; }
+    .btn-logout {
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.7); padding: 4px 10px; border-radius: 5px;
+      cursor: pointer; font-size: 0.75rem; transition: all .15s;
+    }
+    .btn-logout:hover { background: rgba(255,255,255,.15); color: #fff; }
+
+    /* ─── Page Layout ────────────────────────────────────────────────────────── */
+    .page { display: none; padding: 16px 20px; }
+    .page.active { display: block; }
+    .page-title { font-size: 1.15rem; font-weight: 700; color: #1c1c2e; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .page-title i { color: #c0392b; }
+
+    /* ─── Filter Bar ──────────────────────────────────────────────────────────── */
+    .filter-bar {
+      background: #fff; border-radius: 10px; padding: 12px 16px;
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;
+      margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+    .filter-group label { font-size: 0.72rem; font-weight: 600; color: #7f8c8d; text-transform: uppercase; letter-spacing: .4px; }
+    .filter-group select, .filter-group input {
+      padding: 6px 10px; border: 1px solid #dce1e7; border-radius: 6px;
+      font-size: 0.83rem; color: #2c3e50; outline: none; background: #fff;
+      transition: border-color .15s;
+    }
+    .filter-group select:focus, .filter-group input:focus { border-color: #c0392b; }
+    .filter-group select { cursor: pointer; min-width: 90px; }
+    .filter-group input { min-width: 140px; }
+    .toggle-group { display: flex; border: 1px solid #dce1e7; border-radius: 6px; overflow: hidden; }
+    .toggle-btn {
+      padding: 6px 12px; border: none; background: #fff; font-size: 0.8rem;
+      cursor: pointer; color: #5d6d7e; transition: all .15s;
+    }
+    .toggle-btn.active { background: #c0392b; color: #fff; font-weight: 600; }
+    .toggle-btn:not(:last-child) { border-right: 1px solid #dce1e7; }
+    .btn-refresh {
+      padding: 7px 16px; background: #c0392b; color: #fff; border: none;
+      border-radius: 6px; font-size: 0.83rem; font-weight: 600; cursor: pointer;
+      transition: background .15s; display: flex; align-items: center; gap: 6px;
+    }
+    .btn-refresh:hover { background: #a93226; }
+    .btn-refresh:disabled { background: #bbb; cursor: not-allowed; }
+    .btn-refresh i { font-size: 0.78rem; }
+
+    /* ─── Stats Bar ───────────────────────────────────────────────────────────── */
+    .stats-bar {
+      display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
+    }
+    .stat-chip {
+      background: #fff; border-radius: 6px; padding: 6px 12px;
+      font-size: 0.78rem; color: #5d6d7e; box-shadow: 0 1px 3px rgba(0,0,0,.07);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .stat-chip strong { color: #2c3e50; font-weight: 700; }
+    .stat-chip i { color: #c0392b; font-size: 0.72rem; }
+
+    /* ─── Table Wrapper ───────────────────────────────────────────────────────── */
+    .table-wrapper {
+      background: #fff; border-radius: 10px; overflow-x: auto;
+      box-shadow: 0 1px 4px rgba(0,0,0,.09); max-height: calc(100vh - 250px);
+      overflow-y: auto; position: relative;
+    }
+    .loading-overlay {
+      position: absolute; inset: 0; background: rgba(255,255,255,.7);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; color: #c0392b; gap: 10px; z-index: 10;
+    }
+    .loading-overlay i { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── Main Table ──────────────────────────────────────────────────────────── */
+    table { border-collapse: collapse; width: 100%; font-size: 0.78rem; white-space: nowrap; }
+    thead th {
+      background: #1c1c2e; color: rgba(255,255,255,.85); font-weight: 600;
+      padding: 8px 10px; text-align: center; position: sticky; top: 0; z-index: 5;
+      border-right: 1px solid rgba(255,255,255,.08);
+      cursor: pointer; user-select: none;
+    }
+    thead th:first-child { text-align: left; }
+    thead th.sort-asc::after  { content: ' ▲'; font-size: .65rem; }
+    thead th.sort-desc::after { content: ' ▼'; font-size: .65rem; }
+    thead .th-group {
+      background: #2c3e50; color: rgba(255,255,255,.6); font-size: 0.68rem;
+      font-weight: 500; text-transform: uppercase; letter-spacing: .4px;
+      padding: 4px 10px; position: sticky; top: 0; z-index: 5;
+    }
+
+    tbody tr { border-bottom: 1px solid #f0f2f5; transition: opacity .1s; }
+    tbody tr:hover { filter: brightness(0.95); }
+    tbody td { padding: 7px 10px; text-align: right; border-right: 1px solid #f0f2f5; }
+    tbody td:nth-child(1) { text-align: left; font-weight: 600; color: #1c1c2e; min-width: 80px; }
+    tbody td:nth-child(2) { text-align: left; min-width: 180px; }
+    tbody td:nth-child(3) { text-align: left; min-width: 160px; }
+    tbody td:nth-child(4) { text-align: left; min-width: 110px; font-size: 0.73rem; color: #7f8c8d; }
+
+    /* Row color rules */
+    tr.color-lightgreen  { background: #d5f5e3; }
+    tr.color-lightyellow { background: #fef9e7; }
+    tr.color-white       { background: #ffffff; }
+    tr.color-lightpink   { background: #fde8e8; }
+
+    /* Variation % cells */
+    .var-pos { color: #27ae60; font-weight: 700; }
+    .var-neg { color: #e74c3c; font-weight: 700; }
+    .var-new { color: #7f8c8d; font-style: italic; }
+    .var-zero { color: #bbb; }
+
+    /* Product type badge */
+    .badge {
+      display: inline-block; padding: 2px 6px; border-radius: 4px;
+      font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+    }
+    .badge-rtd     { background: #d6eaf8; color: #1a5276; }
+    .badge-spirits { background: #fdebd0; color: #784212; }
+
+    /* ─── Pagination ──────────────────────────────────────────────────────────── */
+    .pagination {
+      display: flex; align-items: center; gap: 6px; padding: 12px 16px;
+      background: #fff; border-radius: 0 0 10px 10px; border-top: 1px solid #f0f2f5;
+      justify-content: center; flex-wrap: wrap;
+    }
+    .page-btn {
+      padding: 5px 11px; border: 1px solid #dce1e7; border-radius: 5px;
+      background: #fff; cursor: pointer; font-size: 0.78rem; color: #5d6d7e;
+      transition: all .15s;
+    }
+    .page-btn:hover:not(:disabled) { border-color: #c0392b; color: #c0392b; }
+    .page-btn.active { background: #c0392b; border-color: #c0392b; color: #fff; font-weight: 600; }
+    .page-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .page-info { font-size: 0.78rem; color: #7f8c8d; padding: 0 8px; }
+
+    /* ─── Empty / Error states ──────────────────────────────────────────────── */
+    .empty-state {
+      text-align: center; padding: 60px 20px; color: #95a5a6;
+    }
+    .empty-state i { font-size: 3rem; display: block; margin-bottom: 12px; }
+    .error-banner {
+      background: #fde8e8; border: 1px solid #f5b7b1; border-radius: 8px;
+      padding: 10px 14px; color: #922b21; font-size: 0.82rem; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* ─── Setup Banner (for anon key) ─────────────────────────────────────── */
+    .setup-banner {
+      background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px;
+      padding: 12px 16px; color: #856404; font-size: 0.83rem;
+      margin-bottom: 14px; display: flex; align-items: flex-start; gap: 10px;
+    }
+    .setup-banner i { margin-top: 2px; }
+    .setup-banner code {
+      background: rgba(0,0,0,.08); padding: 1px 5px; border-radius: 3px;
+      font-family: monospace; font-size: 0.8rem;
+    }
+
+    /* ─── Stub page ──────────────────────────────────────────────────────────── */
+    .stub { text-align: center; padding: 80px 20px; color: #bdc3c7; }
+    .stub i { font-size: 4rem; display: block; margin-bottom: 16px; color: #dce1e7; }
+    .stub h2 { font-size: 1.2rem; color: #95a5a6; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     LOGIN PAGE
+════════════════════════════════════════════════════════════════════════ -->
+<div id="login-page">
+  <div class="login-card">
+    <img class="login-logo"
+         src="https://saq.cherryriver.ca/wp-content/uploads/2021/11/Logo-Cherry-River-web.png"
+         onerror="this.style.display='none'"
+         alt="Cherry River">
+    <h1>SAQ Dashboard</h1>
+    <p>Connectez-vous avec votre compte Cherry River</p>
+    <div class="form-group">
+      <label for="login-email">Courriel</label>
+      <input type="email" id="login-email" placeholder="prenom@cherryriver.ca" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label for="login-pass">Mot de passe</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-login" id="btn-login">
+      <i class="fa fa-sign-in-alt"></i> Connexion
+    </button>
+    <div class="login-error" id="login-error" hidden></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     MAIN APP
+════════════════════════════════════════════════════════════════════════ -->
+<div id="app" hidden>
+  <!-- Top Navigation -->
+  <nav class="topnav">
+    <img class="topnav-logo"
+         src="https://saq.cherryriver.ca/wp-content/uploads/2021/11/Logo-Cherry-River-web.png"
+         onerror="this.style.display='none'"
+         alt="Cherry River">
+    <a class="nav-item active" data-page="ventes" href="#">
+      <i class="fa fa-chart-bar"></i> Ventes
+    </a>
+    <a class="nav-item" data-page="alertes" href="#">
+      <i class="fa fa-bell"></i> Alertes
+    </a>
+    <a class="nav-item" data-page="commissions" href="#">
+      <i class="fa fa-dollar-sign"></i> Commissions
+    </a>
+    <a class="nav-item" data-page="visites" href="#">
+      <i class="fa fa-clipboard-list"></i> Rapports de visite
+    </a>
+    <a class="nav-item" data-page="promo" href="#">
+      <i class="fa fa-gift"></i> Promo Punch
+    </a>
+    <div class="nav-spacer"></div>
+    <div class="nav-user">
+      <i class="fa fa-user-circle"></i>
+      <span id="nav-username">—</span>
+    </div>
+    <button class="btn-logout" id="btn-logout">Déconnexion</button>
+  </nav>
+
+  <!-- ── PAGE: VENTES ──────────────────────────────────────────────────── -->
+  <section class="page active" id="page-ventes">
+    <div class="page-title">
+      <i class="fa fa-chart-bar"></i>
+      Sommaire des ventes SAQ
+    </div>
+
+    <div id="setup-banner" class="setup-banner" hidden>
+      <i class="fa fa-triangle-exclamation"></i>
+      <div>
+        <strong>Configuration requise :</strong> Ajoutez votre clé anon Supabase dans
+        <code>SUPABASE_ANON_KEY</code> au début du fichier
+        (<a href="https://supabase.com/dashboard/project/nqxqqoinpoomcqdddoqq/settings/api"
+            target="_blank" rel="noopener">Supabase → Settings → API</a>).
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label>Année</label>
+        <select id="f-year">
+          <option value="2025" selected>2025</option>
+          <option value="2024">2024</option>
+          <option value="2023">2023</option>
+          <option value="2022">2022</option>
+          <option value="2021">2021</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Période</label>
+        <select id="f-period">
+          <option value="1">P1</option><option value="2">P2</option>
+          <option value="3">P3</option><option value="4">P4</option>
+          <option value="5">P5</option><option value="6">P6</option>
+          <option value="7">P7</option><option value="8">P8</option>
+          <option value="9">P9</option><option value="10" selected>P10</option>
+          <option value="11">P11</option><option value="12">P12</option>
+          <option value="13">P13</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Représentant</label>
+        <select id="f-rep">
+          <option value="">Tous les reps</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Produit</label>
+        <input type="text" id="f-product" placeholder="Nom ou code SAQ">
+      </div>
+      <div class="filter-group">
+        <label>Succursale</label>
+        <input type="text" id="f-store" placeholder="Nom de la succursale">
+      </div>
+      <div class="filter-group">
+        <label>Affichage</label>
+        <div class="toggle-group">
+          <button class="toggle-btn active" data-mode="bouteilles">Bout.</button>
+          <button class="toggle-btn" data-mode="caisses">Caisses</button>
+          <button class="toggle-btn" data-mode="montant">Montant</button>
+        </div>
+      </div>
+      <button class="btn-refresh" id="btn-refresh">
+        <i class="fa fa-sync-alt" id="refresh-icon"></i> Actualiser
+      </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar" id="stats-bar"></div>
+
+    <!-- Error -->
+    <div id="error-banner" class="error-banner" hidden>
+      <i class="fa fa-circle-exclamation"></i>
+      <span id="error-msg"></span>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrapper" id="table-wrapper">
+      <div class="loading-overlay" id="loading-overlay">
+        <i class="fa fa-circle-notch"></i> Chargement…
+      </div>
+      <table id="main-table">
+        <thead id="main-thead"></thead>
+        <tbody id="main-tbody">
+          <tr><td colspan="20" class="empty-state">
+            <i class="fa fa-table"></i>
+            Sélectionnez une période et cliquez sur Actualiser.
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination"></div>
+  </section>
+
+  <!-- ── PAGE: ALERTES (stub) ─────────────────────────────────────────── -->
+  <section class="page" id="page-alertes">
+    <div class="stub">
+      <i class="fa fa-bell"></i>
+      <h2>Alertes — En cours de développement</h2>
+      <p>Cette page sera disponible prochainement.</p>
+    </div>
+  </section>
+
+  <!-- ── PAGE: COMMISSIONS (stub) ─────────────────────────────────────── -->
+  <section class="page" id="page-commissions">
+    <div class="stub">
+      <i class="fa fa-dollar-sign"></i>
+      <h2>Commissions — En cours de développement</h2>
+      <p>Cette page sera disponible prochainement.</p>
+    </div>
+  </section>
+
+  <!-- ── PAGE: VISITES (stub) ──────────────────────────────────────────── -->
+  <section class="page" id="page-visites">
+    <div class="stub">
+      <i class="fa fa-clipboard-list"></i>
+      <h2>Rapport de visite — En cours de développement</h2>
+      <p>Cette page sera disponible prochainement.</p>
+    </div>
+  </section>
+
+  <!-- ── PAGE: PROMO (stub) ────────────────────────────────────────────── -->
+  <section class="page" id="page-promo">
+    <div class="stub">
+      <i class="fa fa-gift"></i>
+      <h2>Promo Punch — En cours de développement</h2>
+      <p>Cette page sera disponible prochainement.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+//  CONFIG — paste your Supabase anon key here
+//  Get it from: https://supabase.com/dashboard/project/nqxqqoinpoomcqdddoqq/settings/api
+// ═══════════════════════════════════════════════════════════════════════════
+const SUPABASE_URL      = 'https://nqxqqoinpoomcqdddoqq.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xeHFxb2lucG9vbWNxZGRkb3FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5NjI5MjEsImV4cCI6MjA4MzUzODkyMX0.EOgiyKPLaiYCpD5nDTTJnuS79wL4M1RHsm0WhKSIXlQ';
+// ═══════════════════════════════════════════════════════════════════════════
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── State ────────────────────────────────────────────────────────────────
+const state = {
+  user:        null,
+  displayMode: 'bouteilles',  // 'bouteilles' | 'caisses' | 'montant'
+  currentPage: 1,
+  pageSize:    25,
+  totalCount:  0,
+  data:        [],
+  hasS5:       false,
+  sortCol:     null,
+  sortDir:     'desc',
+  loading:     false,
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function fmtQty(val, row) {
+  const n = Number(val) || 0;
+  if (state.displayMode === 'caisses') {
+    const fmt = row.format_caisse || 12;
+    return (n / fmt).toFixed(2);
+  }
+  if (state.displayMode === 'montant') {
+    const fmt  = row.format_caisse  || 12;
+    const rate = row.commission_rate || 5.00;
+    return (n / fmt * rate).toFixed(2) + '\u00a0$';
+  }
+  return n === 0 ? '—' : n.toLocaleString('fr-CA');
+}
+
+function fmtVar(ty, ly) {
+  const t = Number(ty) || 0;
+  const l = Number(ly) || 0;
+  if (t === 0 && l === 0) return { html: '<span class="var-zero">—</span>' };
+  if (l === 0) return { html: '<span class="var-new">NEW</span>' };
+  const pct = ((t - l) / l * 100).toFixed(1);
+  const cls = pct > 0 ? 'var-pos' : pct < 0 ? 'var-neg' : 'var-zero';
+  const sign = pct > 0 ? '+' : '';
+  return { html: `<span class="${cls}">${sign}${pct}%</span>` };
+}
+
+function rowColorClass(row) {
+  const c = row.couleur_alerte || '';
+  if (c === 'lightgreen')  return 'color-lightgreen';
+  if (c === 'lightyellow') return 'color-lightyellow';
+  if (c === 'lightpink')   return 'color-lightpink';
+  return 'color-white';
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-banner');
+  document.getElementById('error-msg').textContent = msg;
+  el.hidden = false;
+}
+function hideError() { document.getElementById('error-banner').hidden = true; }
+
+function setLoading(on) {
+  state.loading = on;
+  document.getElementById('loading-overlay').hidden = !on;
+  const btn = document.getElementById('btn-refresh');
+  const ico = document.getElementById('refresh-icon');
+  btn.disabled = on;
+  ico.className = on ? 'fa fa-circle-notch fa-spin' : 'fa fa-sync-alt';
+}
+
+// ── Build Table Head ──────────────────────────────────────────────────────
+function buildHead() {
+  const s5 = state.hasS5;
+  const thead = document.getElementById('main-thead');
+  const prevP = Number(document.getElementById('f-period').value) === 1 ? 13
+               : Number(document.getElementById('f-period').value) - 1;
+  const yr = document.getElementById('f-year').value;
+
+  thead.innerHTML = `
+    <tr class="th-group">
+      <th colspan="4" class="th-group" style="text-align:left">Info générale</th>
+      <th colspan="3" class="th-group">Période P${prevP} — Comparaison</th>
+      <th colspan="${s5 ? 5 : 4}" class="th-group">Semaines — P${document.getElementById('f-period').value}</th>
+      <th colspan="3" class="th-group">Période en cours (PTD)</th>
+      <th colspan="3" class="th-group">Total ${yr}</th>
+    </tr>
+    <tr>
+      <th data-col="code_saq"  style="text-align:left">Code</th>
+      <th data-col="nom"       style="text-align:left">Nom</th>
+      <th data-col="store_name" style="text-align:left">Succursale</th>
+      <th data-col="rep_name"  style="text-align:left">Rep</th>
+      <th data-col="lply">LPLY</th>
+      <th data-col="lpty">LPTY</th>
+      <th data-col="var_lp">Var %</th>
+      <th data-col="s1">S1</th>
+      <th data-col="s2">S2</th>
+      <th data-col="s3">S3</th>
+      <th data-col="s4">S4</th>
+      ${s5 ? '<th data-col="s5">S5</th>' : ''}
+      <th data-col="ptdly">PTDLY</th>
+      <th data-col="ptdty">PTDTY</th>
+      <th data-col="var_ptd">Var %</th>
+      <th data-col="total_ly">Total LY</th>
+      <th data-col="total_ty">Total TY</th>
+      <th data-col="var_tot">Var %</th>
+    </tr>`;
+
+  // Sort indicators
+  thead.querySelectorAll('th[data-col]').forEach(th => {
+    if (th.dataset.col === state.sortCol) {
+      th.classList.add(state.sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+    }
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (state.sortCol === col) {
+        state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        state.sortCol = col;
+        state.sortDir = 'desc';
+      }
+      renderTable(); // client-side sort of current page
+      buildHead();
+    });
+  });
+}
+
+// ── Render Table Body ─────────────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('main-tbody');
+  const s5 = state.hasS5;
+
+  let rows = [...state.data];
+
+  // Client-side sort
+  if (state.sortCol) {
+    const dir = state.sortDir === 'asc' ? 1 : -1;
+    const sc = state.sortCol;
+    rows.sort((a, b) => {
+      let va = a[sc] ?? '', vb = b[sc] ?? '';
+      if (sc === 'var_lp')  { va = a.lply > 0 ? (a.lpty - a.lply) / a.lply : 0; vb = b.lply > 0 ? (b.lpty - b.lply) / b.lply : 0; }
+      if (sc === 'var_ptd') { va = a.ptdly > 0 ? (a.ptdty - a.ptdly) / a.ptdly : 0; vb = b.ptdly > 0 ? (b.ptdty - b.ptdly) / b.ptdly : 0; }
+      if (sc === 'var_tot') { va = a.total_ly > 0 ? (a.total_ty - a.total_ly) / a.total_ly : 0; vb = b.total_ly > 0 ? (b.total_ty - b.total_ly) / b.total_ly : 0; }
+      if (typeof va === 'string') return va.localeCompare(vb) * dir;
+      return ((Number(va) || 0) - (Number(vb) || 0)) * dir;
+    });
+  }
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="20">
+      <div class="empty-state"><i class="fa fa-inbox"></i>Aucun résultat pour cette sélection.</div>
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(row => {
+    const cc = rowColorClass(row);
+    const varLP  = fmtVar(row.lpty,     row.lply);
+    const varPTD = fmtVar(row.ptdty,    row.ptdly);
+    const varTot = fmtVar(row.total_ty, row.total_ly);
+    const badge  = row.product_type === 'rtd'
+      ? '<span class="badge badge-rtd">RTD</span>'
+      : '<span class="badge badge-spirits">Spirits</span>';
+
+    return `<tr class="${cc}">
+      <td>${row.code_saq}</td>
+      <td title="${row.nom}">${row.nom}${badge ? ' ' + badge : ''}</td>
+      <td title="${row.store_name} (${row.store_id})">${row.store_name || row.store_id}</td>
+      <td>${row.rep_name || '—'}</td>
+      <td>${fmtQty(row.lply, row)}</td>
+      <td>${fmtQty(row.lpty, row)}</td>
+      <td>${varLP.html}</td>
+      <td>${fmtQty(row.s1, row)}</td>
+      <td>${fmtQty(row.s2, row)}</td>
+      <td>${fmtQty(row.s3, row)}</td>
+      <td>${fmtQty(row.s4, row)}</td>
+      ${s5 ? `<td>${fmtQty(row.s5, row)}</td>` : ''}
+      <td>${fmtQty(row.ptdly, row)}</td>
+      <td>${fmtQty(row.ptdty, row)}</td>
+      <td>${varPTD.html}</td>
+      <td>${fmtQty(row.total_ly, row)}</td>
+      <td>${fmtQty(row.total_ty, row)}</td>
+      <td>${varTot.html}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Build Pagination ──────────────────────────────────────────────────────
+function buildPagination() {
+  const total = state.totalCount;
+  const pages = Math.ceil(total / state.pageSize);
+  const cur   = state.currentPage;
+  const pg    = document.getElementById('pagination');
+
+  if (pages <= 1) { pg.innerHTML = ''; return; }
+
+  let btns = `
+    <button class="page-btn" ${cur === 1 ? 'disabled' : ''} data-p="${cur - 1}">
+      <i class="fa fa-chevron-left"></i>
+    </button>`;
+
+  // Show up to 7 page buttons with ellipsis
+  const range = [];
+  for (let i = 1; i <= pages; i++) {
+    if (i === 1 || i === pages || (i >= cur - 2 && i <= cur + 2)) range.push(i);
+  }
+  let prev = null;
+  for (const p of range) {
+    if (prev !== null && p - prev > 1) btns += `<span class="page-info">…</span>`;
+    btns += `<button class="page-btn ${p === cur ? 'active' : ''}" data-p="${p}">${p}</button>`;
+    prev = p;
+  }
+
+  btns += `
+    <button class="page-btn" ${cur === pages ? 'disabled' : ''} data-p="${cur + 1}">
+      <i class="fa fa-chevron-right"></i>
+    </button>
+    <span class="page-info">${total.toLocaleString('fr-CA')} résultats</span>`;
+
+  pg.innerHTML = btns;
+  pg.querySelectorAll('[data-p]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.currentPage = Number(btn.dataset.p);
+      fetchData();
+    });
+  });
+}
+
+// ── Fetch from Supabase ───────────────────────────────────────────────────
+async function fetchData() {
+  if (SUPABASE_ANON_KEY === 'SUPABASE_ANON_KEY_HERE') {
+    document.getElementById('setup-banner').hidden = false;
+    return;
+  }
+
+  setLoading(true);
+  hideError();
+
+  const yr      = Number(document.getElementById('f-year').value);
+  const per     = Number(document.getElementById('f-period').value);
+  const repId   = document.getElementById('f-rep').value || null;
+  const product = document.getElementById('f-product').value.trim() || null;
+  const store   = document.getElementById('f-store').value.trim() || null;
+  const offset  = (state.currentPage - 1) * state.pageSize;
+
+  try {
+    const { data, error } = await sb.rpc('get_sales_dashboard', {
+      p_yr:      yr,
+      p_per:     per,
+      p_store:   store,
+      p_rep_id:  repId ? Number(repId) : null,
+      p_product: product,
+      p_limit:   state.pageSize,
+      p_offset:  offset,
+    });
+
+    if (error) throw error;
+
+    state.data       = data || [];
+    state.totalCount = data?.[0]?.total_count ?? 0;
+    state.hasS5      = state.data.some(r => Number(r.s5) > 0);
+
+    // Stats bar
+    const totalPTDTY = state.data.reduce((s, r) => s + (Number(r.ptdty) || 0), 0);
+    const totalPTDLY = state.data.reduce((s, r) => s + (Number(r.ptdly) || 0), 0);
+    const varPct = totalPTDLY > 0 ? ((totalPTDTY - totalPTDLY) / totalPTDLY * 100).toFixed(1) : '—';
+    const varCls = varPct === '—' ? '' : Number(varPct) >= 0 ? 'var-pos' : 'var-neg';
+    const sign   = varPct !== '—' && Number(varPct) > 0 ? '+' : '';
+
+    document.getElementById('stats-bar').innerHTML = `
+      <div class="stat-chip"><i class="fa fa-layer-group"></i>
+        <span><strong>${state.totalCount.toLocaleString('fr-CA')}</strong> lignes</span>
+      </div>
+      <div class="stat-chip"><i class="fa fa-wine-bottle"></i>
+        <span>PTD TY: <strong>${fmtQtyRaw(totalPTDTY)}</strong></span>
+      </div>
+      <div class="stat-chip"><i class="fa fa-history"></i>
+        <span>PTD LY: <strong>${fmtQtyRaw(totalPTDLY)}</strong></span>
+      </div>
+      <div class="stat-chip"><i class="fa fa-percent"></i>
+        <span>Var: <strong class="${varCls}">${sign}${varPct}${varPct !== '—' ? '%' : ''}</strong></span>
+      </div>`;
+
+    buildHead();
+    renderTable();
+    buildPagination();
+
+  } catch (err) {
+    showError(`Erreur : ${err.message || err}`);
+    state.data = [];
+    renderTable();
+  } finally {
+    setLoading(false);
+  }
+}
+
+function fmtQtyRaw(n) {
+  // Stats bar always shows bouteilles
+  return (n || 0).toLocaleString('fr-CA');
+}
+
+// ── Reps Dropdown ─────────────────────────────────────────────────────────
+async function loadReps() {
+  if (SUPABASE_ANON_KEY === 'SUPABASE_ANON_KEY_HERE') return;
+  try {
+    const { data } = await sb.rpc('get_reps');
+    const sel = document.getElementById('f-rep');
+    (data || []).forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.rep_user_id;
+      opt.textContent = r.rep_name;
+      sel.appendChild(opt);
+    });
+  } catch (_) {}
+}
+
+// ── Auth (simple wp_users check) ──────────────────────────────────────────
+async function tryLogin(email, password) {
+  if (SUPABASE_ANON_KEY === 'SUPABASE_ANON_KEY_HERE') {
+    // Allow bypass login when key not set yet (dev mode)
+    return { ID: 0, display_name: email, user_email: email };
+  }
+  try {
+    const { data, error } = await sb
+      .from('wp_users')
+      .select('"ID", display_name, user_email')
+      .eq('user_email', email)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    // Note: WP password hashes (phpass) can't be verified client-side.
+    // Accept any password for now — add Supabase Auth in next iteration.
+    return data;
+  } catch (e) {
+    console.error('Login error', e);
+    return null;
+  }
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────
+function navigate(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-' + pageId)?.classList.add('active');
+  document.querySelector(`[data-page="${pageId}"]`)?.classList.add('active');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+function initApp(user) {
+  state.user = user;
+  document.getElementById('login-page').hidden = true;
+  document.getElementById('app').hidden = false;
+  document.getElementById('nav-username').textContent =
+    user.display_name || user.user_email || user.ID;
+
+  if (SUPABASE_ANON_KEY === 'SUPABASE_ANON_KEY_HERE') {
+    document.getElementById('setup-banner').hidden = false;
+  }
+
+  loadReps();
+  fetchData();
+}
+
+// ── Event Listeners ───────────────────────────────────────────────────────
+document.getElementById('btn-login').addEventListener('click', async () => {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+
+  if (!email) { errEl.textContent = 'Veuillez entrer votre courriel.'; errEl.hidden = false; return; }
+
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Connexion…';
+
+  const user = await tryLogin(email, pass);
+
+  if (user) {
+    errEl.hidden = true;
+    sessionStorage.setItem('saq_user', JSON.stringify(user));
+    initApp(user);
+  } else {
+    errEl.textContent = 'Courriel introuvable ou accès non autorisé.';
+    errEl.hidden = false;
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa fa-sign-in-alt"></i> Connexion';
+  }
+});
+
+// Enter key on login
+['login-email', 'login-pass'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('btn-login').click();
+  });
+});
+
+document.getElementById('btn-logout').addEventListener('click', () => {
+  sessionStorage.removeItem('saq_user');
+  location.reload();
+});
+
+document.getElementById('btn-refresh').addEventListener('click', () => {
+  state.currentPage = 1;
+  fetchData();
+});
+
+// Refresh on Enter in filter inputs
+['f-product', 'f-store'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') { state.currentPage = 1; fetchData(); }
+  });
+});
+
+// Display mode toggle
+document.querySelectorAll('.toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.displayMode = btn.dataset.mode;
+    renderTable(); // re-render with new format (no new API call needed)
+  });
+});
+
+// Nav links
+document.querySelectorAll('.nav-item[data-page]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    navigate(a.dataset.page);
+  });
+});
+
+// ── Auto-login if session exists ─────────────────────────────────────────
+const savedUser = sessionStorage.getItem('saq_user');
+if (savedUser) {
+  try { initApp(JSON.parse(savedUser)); }
+  catch (_) { sessionStorage.removeItem('saq_user'); }
+}
+
+// ── Dev bypass: show banner if key not set ────────────────────────────────
+if (SUPABASE_ANON_KEY === 'SUPABASE_ANON_KEY_HERE') {
+  // Show login page but allow bypass login with any credentials
+  console.warn('⚠️ SUPABASE_ANON_KEY not configured. Set it in index.html line 1.');
+}
+</script>
+</body>
+</html>
